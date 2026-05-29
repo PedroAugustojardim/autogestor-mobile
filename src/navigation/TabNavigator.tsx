@@ -1,21 +1,32 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-
-// Placeholders — serão substituídos pelas telas reais nas próximas etapas
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, StyleSheet } from 'react-native';
+import { HomeScreen } from '../screens/home/HomeScreen';
+import { VehicleRegisterScreen } from '../screens/vehicle/VehicleRegisterScreen';
+import { AppTabParamList } from '../types/navigation';
 
+// Placeholders para abas que serão implementadas nas próximas etapas
 const Placeholder = ({ name }: { name: string }) => (
-  <View style={styles.container}>
-    <Text style={styles.text}>{name}</Text>
-  </View>
+  <View style={styles.placeholder}><Text style={styles.placeholderText}>{name}</Text></View>
 );
 
-const HomeScreen = () => <Placeholder name="Home" />;
-const GastosScreen = () => <Placeholder name="Gastos" />;
-const RelatoriosScreen = () => <Placeholder name="Relatórios" />;
-const PerfilScreen = () => <Placeholder name="Perfil" />;
+// Stack interno da aba Home (comporta Home + CadastroVeiculo como modal)
+const HomeStack = createNativeStackNavigator();
+function HomeStackNavigator() {
+  return (
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="HomeMain" component={HomeScreen} />
+      <HomeStack.Screen
+        name="VehicleRegister"
+        component={VehicleRegisterScreen}
+        options={{ presentation: 'modal' }}
+      />
+    </HomeStack.Navigator>
+  );
+}
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<AppTabParamList>();
 
 export function TabNavigator() {
   return (
@@ -33,24 +44,15 @@ export function TabNavigator() {
         headerShown: false,
       }}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Gastos" component={GastosScreen} />
-      <Tab.Screen name="Relatórios" component={RelatoriosScreen} />
-      <Tab.Screen name="Perfil" component={PerfilScreen} />
+      <Tab.Screen name="Home" component={HomeStackNavigator} options={{ tabBarLabel: 'Home' }} />
+      <Tab.Screen name="Gastos" component={() => <Placeholder name="Gastos" />} />
+      <Tab.Screen name="Relatorios" component={() => <Placeholder name="Relatórios" />} options={{ tabBarLabel: 'Relatórios' }} />
+      <Tab.Screen name="Perfil" component={() => <Placeholder name="Perfil" />} />
     </Tab.Navigator>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F5F5F5',
-  },
-  text: {
-    fontSize: 24,
-    color: '#1B5E20',
-    fontWeight: 'bold',
-  },
+  placeholder: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F5F5F5' },
+  placeholderText: { fontSize: 20, color: '#1B5E20', fontWeight: 'bold' },
 });
