@@ -8,9 +8,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVehicleStore } from '../../store/vehicleStore';
 import { useAuthStore } from '../../store/authStore';
 import { VEHICLE_ICONS, VEHICLE_LABELS } from '../../types/vehicle';
-import { AppTabParamList } from '../../types/navigation';
+import { HomeStackParamList } from '../../types/navigation';
 
-type Nav = NativeStackNavigationProp<AppTabParamList>;
+type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
 export function HomeScreen() {
   const { vehicles, activeVehicle, isLoading, fetchVehicles } = useVehicleStore();
@@ -38,7 +38,7 @@ export function HomeScreen() {
         </Text>
         <TouchableOpacity
           style={styles.addButton}
-          onPress={() => navigation.navigate('VehicleRegister' as any)}
+          onPress={() => navigation.navigate('VehicleRegister')}
         >
           <Text style={styles.addButtonText}>+ Cadastrar meu veículo</Text>
         </TouchableOpacity>
@@ -85,7 +85,7 @@ export function HomeScreen() {
 
         <TouchableOpacity
           style={styles.addExpenseBtn}
-          onPress={() => navigation.navigate('Gastos' as any)}
+          onPress={() => navigation.getParent()?.navigate('Gastos')}
         >
           <Text style={styles.addExpenseBtnText}>+ Registrar gasto</Text>
         </TouchableOpacity>

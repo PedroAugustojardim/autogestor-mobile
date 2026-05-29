@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, StyleSheet } from 'react-native';
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { VehicleRegisterScreen } from '../screens/vehicle/VehicleRegisterScreen';
-import { AppTabParamList } from '../types/navigation';
+import { AppTabParamList, HomeStackParamList } from '../types/navigation';
 
 // Placeholders para abas que serão implementadas nas próximas etapas
 const Placeholder = ({ name }: { name: string }) => (
@@ -12,7 +12,7 @@ const Placeholder = ({ name }: { name: string }) => (
 );
 
 // Stack interno da aba Home (comporta Home + CadastroVeiculo como modal)
-const HomeStack = createNativeStackNavigator();
+const HomeStack = createNativeStackNavigator<HomeStackParamList>();
 function HomeStackNavigator() {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
