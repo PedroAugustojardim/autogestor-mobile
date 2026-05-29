@@ -10,8 +10,8 @@ export interface Vehicle {
   renavam: string | null;
   cor: string | null;
   apelido: string | null;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string; // ISO 8601 — JSON serializa Date como string
+  updatedAt: string; // ISO 8601
 }
 
 export interface CreateVehicleDTO {

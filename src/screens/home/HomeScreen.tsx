@@ -13,7 +13,7 @@ import { HomeStackParamList } from '../../types/navigation';
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
 export function HomeScreen() {
-  const { vehicles, activeVehicle, isLoading, fetchVehicles } = useVehicleStore();
+  const { vehicles, activeVehicle, isLoading, error, fetchVehicles } = useVehicleStore();
   const { user } = useAuthStore();
   const navigation = useNavigation<Nav>();
 
@@ -23,6 +23,17 @@ export function HomeScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#1B5E20" />
+      </View>
+    );
+  }
+
+  if (error && vehicles.length === 0) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>⚠️ {error}</Text>
+        <TouchableOpacity style={styles.retryBtn} onPress={fetchVehicles}>
+          <Text style={styles.retryText}>Tentar novamente</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -104,7 +115,10 @@ export function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F5F5' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  errorText: { fontSize: 15, color: '#E53935', textAlign: 'center', marginBottom: 16 },
+  retryBtn: { backgroundColor: '#1B5E20', borderRadius: 8, paddingVertical: 12, paddingHorizontal: 24 },
+  retryText: { color: '#FFF', fontWeight: '600' },
 
   // Empty state
   emptyContainer: {
