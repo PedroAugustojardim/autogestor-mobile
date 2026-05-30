@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useVehicleStore } from '../../store/vehicleStore';
 import { useReportStore } from '../../store/reportStore';
+import { useAuthStore } from '../../store/authStore';
 import { MonthlyPoint, CategoryReport } from '../../types/report';
 
 const MESES_NOME = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -55,14 +56,15 @@ function CategoryBar({ cat, total }: { cat: CategoryReport; total: number }) {
 
 export function RelatoriosScreen() {
   const { activeVehicle } = useVehicleStore();
+  const { user } = useAuthStore();
+  const isPremium = user?.plano !== 'gratuito';
   const {
-    monthly, categoryReport, fuelReport,
+    monthly, categoryReport, fuelReport, yearSummary,
     isLoading, error,
-    fetchMonthly, fetchByCategory, fetchFuel,
-    clear,
+    fetchMonthly, fetchByCategory, fetchFuel, fetchYearSummary,
   } = useReportStore();
 
-  const [tab, setTab] = useState<'gastos' | 'categorias' | 'combustivel'>('gastos');
+  const [tab, setTab] = useState<'gastos' | 'categorias' | 'combustivel' | 'anual'>('gastos');
   const [refreshing, setRefreshing] = useState(false);
 
   const load = async () => {
@@ -70,6 +72,7 @@ export function RelatoriosScreen() {
     if (tab === 'gastos') await fetchMonthly(activeVehicle.id, 6);
     if (tab === 'categorias') await fetchByCategory(activeVehicle.id);
     if (tab === 'combustivel') await fetchFuel(activeVehicle.id, 6);
+    if (tab === 'anual' && isPremium) await fetchYearSummary(activeVehicle.id);
   };
 
   useEffect(() => {
@@ -107,14 +110,17 @@ export function RelatoriosScreen() {
 
       {/* Tabs */}
       <View style={styles.tabs}>
-        {(['gastos', 'categorias', 'combustivel'] as const).map((t) => (
+        {(['gastos', 'categorias', 'combustivel', 'anual'] as const).map((t) => (
           <TouchableOpacity
             key={t}
             style={[styles.tab, tab === t && styles.tabActive]}
             onPress={() => setTab(t)}
           >
             <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-              {t === 'gastos' ? '📊 Gastos' : t === 'categorias' ? '🥧 Categ.' : '⛽ Combust.'}
+              {t === 'gastos' ? '📊 Gastos'
+                : t === 'categorias' ? '🥧 Categ.'
+                : t === 'combustivel' ? '⛽ Combust.'
+                : `📅 Anual${isPremium ? '' : ' 🔒'}`}
             </Text>
           </TouchableOpacity>
         ))}
@@ -256,6 +262,50 @@ export function RelatoriosScreen() {
             </View>
           )}
         </>
+      )}
+
+      {/* ── TAB: ANUAL (Premium) ── */}
+      {tab === 'anual' && !isLoading && (
+        !isPremium ? (
+          <View style={styles.card}>
+            <Text style={{ fontSize: 40, textAlign: 'center', marginBottom: 12 }}>🔒</Text>
+            <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#1B5E20', textAlign: 'center', marginBottom: 8 }}>
+              Recurso Premium
+            </Text>
+            <Text style={{ fontSize: 14, color: '#757575', textAlign: 'center', marginBottom: 20, lineHeight: 20 }}>
+              O resumo anual está disponível apenas no plano Premium. Faça upgrade para desbloquear.
+            </Text>
+            <TouchableOpacity style={{ backgroundColor: '#1B5E20', borderRadius: 8, paddingVertical: 12, alignItems: 'center' }} onPress={() => {}}>
+              <Text style={{ color: '#FFF', fontSize: 15, fontWeight: '700' }}>Ver planos Premium</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Resumo anual {yearSummary?.ano}</Text>
+            {yearSummary ? (
+              <>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <Text style={{ fontSize: 14, color: '#757575' }}>Total do ano</Text>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1B5E20' }}>
+                    {`R$ ${yearSummary.totalAno.toFixed(2).replace('.', ',')}`}
+                  </Text>
+                </View>
+                <View style={styles.divider} />
+                {yearSummary.meses.map((m, i) => (
+                  <View key={i} style={styles.monthRow}>
+                    <Text style={styles.monthLabel}>{m.label}</Text>
+                    <Text style={styles.monthQtd}>{m.quantidade} gasto(s)</Text>
+                    <Text style={[styles.monthTotal, m.total > 0 && styles.monthTotalRed]}>
+                      {`R$ ${m.total.toFixed(2).replace('.', ',')}`}
+                    </Text>
+                  </View>
+                ))}
+              </>
+            ) : (
+              <Text style={styles.noData}>Carregando...</Text>
+            )}
+          </View>
+        )
       )}
 
       <View style={{ height: 32 }} />

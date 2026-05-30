@@ -6,6 +6,7 @@ import { HomeScreen } from '../screens/home/HomeScreen';
 import { VehicleRegisterScreen } from '../screens/vehicle/VehicleRegisterScreen';
 import { GastosNavigator } from './GastosNavigator';
 import { RelatoriosScreen } from '../screens/relatorios/RelatoriosScreen';
+import { PerfilNavigator } from './PerfilNavigator';
 import { AppTabParamList, HomeStackParamList } from '../types/navigation';
 
 const Placeholder = ({ name }: { name: string }) => (
@@ -43,7 +44,7 @@ export function TabNavigator() {
       <Tab.Screen name="Home" component={HomeStackNavigator} />
       <Tab.Screen name="Gastos" component={GastosNavigator} />
       <Tab.Screen name="Relatorios" component={RelatoriosScreen} options={{ tabBarLabel: 'Relatórios' }} />
-      <Tab.Screen name="Perfil" component={() => <Placeholder name="Perfil" />} />
+      <Tab.Screen name="Perfil" component={PerfilNavigator} />
     </Tab.Navigator>
   );
 }

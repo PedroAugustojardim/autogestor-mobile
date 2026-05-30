@@ -23,6 +23,13 @@ export type GastosStackParamList = {
   EditExpense: { expense: Expense; vehicleId: number };
 };
 
+export type PerfilStackParamList = {
+  PerfilMain: undefined;
+  EditarNome: undefined;
+  AlterarSenha: undefined;
+  Planos: undefined;
+};
+
 export type AppTabParamList = {
   Home: undefined;
   Gastos: undefined;
