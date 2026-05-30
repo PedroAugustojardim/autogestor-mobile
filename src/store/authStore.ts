@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 import { useVehicleStore } from './vehicleStore';
 import { useExpenseStore } from './expenseStore';
+import { useReportStore } from './reportStore';
 
 interface User {
   id: number;
@@ -63,6 +64,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     await AsyncStorage.multiRemove(['@autogestor:token', '@autogestor:refreshToken']);
     useVehicleStore.getState().clear();
     useExpenseStore.getState().clear();
+    useReportStore.getState().clear();
     set({ user: null, isAuthenticated: false });
   },
 

@@ -5,6 +5,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { VehicleRegisterScreen } from '../screens/vehicle/VehicleRegisterScreen';
 import { GastosNavigator } from './GastosNavigator';
+import { RelatoriosScreen } from '../screens/relatorios/RelatoriosScreen';
 import { AppTabParamList, HomeStackParamList } from '../types/navigation';
 
 const Placeholder = ({ name }: { name: string }) => (
@@ -41,7 +42,7 @@ export function TabNavigator() {
     >
       <Tab.Screen name="Home" component={HomeStackNavigator} />
       <Tab.Screen name="Gastos" component={GastosNavigator} />
-      <Tab.Screen name="Relatorios" component={() => <Placeholder name="Relatórios" />} options={{ tabBarLabel: 'Relatórios' }} />
+      <Tab.Screen name="Relatorios" component={RelatoriosScreen} options={{ tabBarLabel: 'Relatórios' }} />
       <Tab.Screen name="Perfil" component={() => <Placeholder name="Perfil" />} />
     </Tab.Navigator>
   );
