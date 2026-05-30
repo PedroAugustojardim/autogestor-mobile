@@ -15,7 +15,7 @@ function formatCurrency(v: number) {
 
 // Gráfico de barras simples (sem dependência externa)
 function BarChart({ data }: { data: MonthlyPoint[] }) {
-  const max = Math.max(...data.map((d) => d.total), 1);
+  const max = data.length > 0 ? Math.max(...data.map((d) => d.total), 1) : 1;
   return (
     <View style={chart.container}>
       {data.map((d, i) => (

@@ -38,8 +38,10 @@ api.interceptors.response.use(
         await AsyncStorage.setItem('@autogestor:token', data.accessToken);
         originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
         return api(originalRequest);
-      } catch {
+      } catch (refreshError) {
+        console.warn('[api] refresh token expirado — sessão encerrada', refreshError);
         await AsyncStorage.multiRemove(['@autogestor:token', '@autogestor:refreshToken']);
+        return Promise.reject(refreshError);
       }
     }
 

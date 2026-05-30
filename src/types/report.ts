@@ -20,9 +20,10 @@ export interface CategoryReportResponse {
   categorias: CategoryReport[];
 }
 
+// TypeORM/MySQL retorna DECIMAL como string no JSON — usar Number() para calcular
 export interface FuelHistoricoItem {
   id: number;
-  data: string;
+  data: string;         // 'YYYY-MM-DD'
   litros: string | null;
   precoLitro: string | null;
   valor: string;

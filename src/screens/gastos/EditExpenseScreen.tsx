@@ -15,7 +15,7 @@ export function EditExpenseScreen() {
   const { expense, vehicleId } = route.params;
 
   const { updateExpense, deleteExpense, fetchSummary } = useExpenseStore();
-  const [valor, setValor] = useState(String(Number(expense.valor).toFixed(2)));
+  const [valor, setValor] = useState(Number(expense.valor).toFixed(2));
   const [data, setData] = useState(expense.data);
   const [descricao, setDescricao] = useState(expense.descricao ?? '');
   const [km, setKm] = useState(expense.kmAtual ? String(expense.kmAtual) : '');
