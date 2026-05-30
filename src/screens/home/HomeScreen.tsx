@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVehicleStore } from '../../store/vehicleStore';
 import { useAuthStore } from '../../store/authStore';
+import { useExpenseStore } from '../../store/expenseStore';
 import { VEHICLE_ICONS, VEHICLE_LABELS } from '../../types/vehicle';
 import { HomeStackParamList } from '../../types/navigation';
 
@@ -15,9 +16,13 @@ type Nav = NativeStackNavigationProp<HomeStackParamList>;
 export function HomeScreen() {
   const { vehicles, activeVehicle, isLoading, error, fetchVehicles } = useVehicleStore();
   const { user } = useAuthStore();
+  const { summary, fetchSummary } = useExpenseStore();
   const navigation = useNavigation<Nav>();
 
   useEffect(() => { fetchVehicles(); }, []);
+  useEffect(() => {
+    if (activeVehicle) fetchSummary(activeVehicle.id);
+  }, [activeVehicle?.id]);
 
   if (isLoading && vehicles.length === 0) {
     return (
@@ -90,8 +95,14 @@ export function HomeScreen() {
 
         <View style={styles.monthSummary}>
           <Text style={styles.monthLabel}>Gasto total este mês</Text>
-          <Text style={styles.monthValue}>R$ 0,00</Text>
-          <Text style={styles.monthHint}>Nenhum gasto registrado ainda</Text>
+          <Text style={styles.monthValue}>
+            {`R$ ${(summary?.total ?? 0).toFixed(2).replace('.', ',')}`}
+          </Text>
+          <Text style={styles.monthHint}>
+            {summary && summary.quantidade > 0
+              ? `${summary.quantidade} lançamento(s)`
+              : 'Nenhum gasto registrado ainda'}
+          </Text>
         </View>
 
         <TouchableOpacity

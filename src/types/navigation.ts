@@ -1,3 +1,5 @@
+import { Expense } from './expense';
+
 export type RootStackParamList = {
   Splash: undefined;
   Auth: undefined;
@@ -13,6 +15,12 @@ export type AuthStackParamList = {
 export type HomeStackParamList = {
   HomeMain: undefined;
   VehicleRegister: undefined;
+};
+
+export type GastosStackParamList = {
+  GastosMain: undefined;
+  NewExpense: { vehicleId: number };
+  EditExpense: { expense: Expense; vehicleId: number };
 };
 
 export type AppTabParamList = {
