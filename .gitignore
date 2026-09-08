@@ -1,3 +1,21 @@
+# React Native / Android / iOS (projeto nativo gerado em 2026-09-02)
+.DS_Store
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+*.iml
+*.hprof
+.cxx/
+*.keystore
+!debug.keystore
+ios/build/
+ios/Pods/
+ios/.xcode.env.local
+*.jsbundle
+.metro-health-check*
+/coverage
+
 # Logs
 logs
 *.log
