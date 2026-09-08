@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, ActivityIndicator, Alert,
+  TouchableOpacity, ActivityIndicator, Alert, Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../store/authStore';
 import api from '../../services/api';
+import { usePollUntil } from '../../hooks/usePollUntil';
+
+const POLL_INTERVAL_MS = 3000;
+const MAX_POLL_ATTEMPTS = 100; // ~5 minutos a cada 3s
+
+interface SubscriptionStatus { plano: string; pendingCheckout: boolean }
 
 const FEATURES_FREE = [
   '1 veículo cadastrado',
@@ -58,18 +64,44 @@ export function PlanosScreen() {
 
   const isPremium = user?.plano !== 'gratuito';
 
+  // Sem deep link pra voltar automaticamente do navegador pro app depois do
+  // checkout — quem realmente libera o Premium é o webhook do Mercado Pago, então
+  // aqui só fica perguntando "já mudou?" a cada 3s até o usuário voltar pro app.
+  const { isPolling: waitingPayment, start: startPolling, stop: stopPolling } = usePollUntil<SubscriptionStatus>({
+    intervalMs: POLL_INTERVAL_MS,
+    maxAttempts: MAX_POLL_ATTEMPTS,
+    fetcher: async () => (await api.get<SubscriptionStatus>('/subscriptions/status')).data,
+    isDone: (data) => !data.pendingCheckout,
+    onDone: async (data) => {
+      if (data.plano !== 'gratuito') {
+        await restoreSession();
+        Alert.alert(
+          '🎉 Bem-vindo ao Premium!',
+          'Seu plano foi ativado. Aproveite todos os recursos!',
+          [{ text: 'Começar', onPress: () => navigation.goBack() }],
+        );
+      } else {
+        Alert.alert('Pagamento não concluído', 'Não foi possível confirmar o pagamento. Tente novamente.');
+      }
+    },
+    onMaxAttempts: (erroredLastAttempt) => {
+      // Se esgotou as tentativas por erro de rede repetido (não por continuar
+      // "pending"), fica em silêncio — mesmo comportamento de antes.
+      if (!erroredLastAttempt) {
+        Alert.alert('Ainda processando', 'Não confirmamos o pagamento ainda. Você pode conferir seu plano mais tarde.');
+      }
+    },
+  });
+
   const handleUpgrade = async () => {
     setLoading(true);
     try {
-      await api.put('/users/me/plan', { plano: selected });
-      await restoreSession();
-      Alert.alert(
-        '🎉 Bem-vindo ao Premium!',
-        'Seu plano foi ativado. Aproveite todos os recursos!',
-        [{ text: 'Começar', onPress: () => navigation.goBack() }],
-      );
+      const { data } = await api.post<{ checkoutUrl: string }>('/subscriptions/checkout', { plano: selected });
+      if (!data.checkoutUrl) throw new Error('checkoutUrl ausente na resposta');
+      await Linking.openURL(data.checkoutUrl);
+      startPolling();
     } catch (err: any) {
-      Alert.alert('Erro', err?.response?.data?.error ?? 'Não foi possível ativar o plano');
+      Alert.alert('Erro', err?.response?.data?.error ?? 'Não foi possível iniciar o pagamento');
     } finally {
       setLoading(false);
     }
@@ -139,18 +171,28 @@ export function PlanosScreen() {
             </TouchableOpacity>
           ))}
 
-          <TouchableOpacity
-            style={[styles.cta, loading && styles.ctaDisabled]}
-            onPress={handleUpgrade}
-            disabled={loading}
-          >
-            {loading
-              ? <ActivityIndicator color="#FFF" />
-              : <Text style={styles.ctaText}>Ativar {selected === 'premium_anual' ? 'Plano Anual' : 'Plano Mensal'}</Text>}
-          </TouchableOpacity>
+          {waitingPayment ? (
+            <View style={styles.waitingBox}>
+              <ActivityIndicator color="#1B5E20" />
+              <Text style={styles.waitingText}>Aguardando confirmação do pagamento…</Text>
+              <TouchableOpacity onPress={stopPolling}>
+                <Text style={styles.waitingCancel}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.cta, loading && styles.ctaDisabled]}
+              onPress={handleUpgrade}
+              disabled={loading}
+            >
+              {loading
+                ? <ActivityIndicator color="#FFF" />
+                : <Text style={styles.ctaText}>Ativar {selected === 'premium_anual' ? 'Plano Anual' : 'Plano Mensal'}</Text>}
+            </TouchableOpacity>
+          )}
 
           <Text style={styles.disclaimer}>
-            Pagamento processado de forma segura. Cancele a qualquer momento.
+            Pagamento processado de forma segura pelo Mercado Pago. Cancele a qualquer momento.
           </Text>
         </>
       )}
@@ -197,5 +239,11 @@ const styles = StyleSheet.create({
   cta: { backgroundColor: '#1B5E20', borderRadius: 10, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
   ctaDisabled: { opacity: 0.6 },
   ctaText: { color: '#FFF', fontSize: 17, fontWeight: 'bold' },
+  waitingBox: {
+    backgroundColor: '#FFF', borderRadius: 10, paddingVertical: 20,
+    alignItems: 'center', marginTop: 8, gap: 10, elevation: 1,
+  },
+  waitingText: { color: '#616161', fontSize: 14 },
+  waitingCancel: { color: '#9E9E9E', fontSize: 13, fontWeight: '600', marginTop: 4 },
   disclaimer: { textAlign: 'center', fontSize: 11, color: '#BDBDBD', marginTop: 16 },
 });
