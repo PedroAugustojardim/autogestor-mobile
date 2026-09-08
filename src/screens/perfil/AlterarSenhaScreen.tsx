@@ -5,6 +5,10 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import api from '../../services/api';
+import {
+  PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH,
+  PASSWORD_UPPERCASE_REGEX, PASSWORD_DIGIT_REGEX, PASSWORD_SYMBOL_REGEX,
+} from '../../utils/password';
 
 export function AlterarSenhaScreen() {
   const navigation = useNavigation();
@@ -17,7 +21,11 @@ export function AlterarSenhaScreen() {
 
   const handleSave = async () => {
     if (!currentPassword) { Alert.alert('Atenção', 'Informe a senha atual'); return; }
-    if (newPassword.length < 8) { Alert.alert('Atenção', 'A nova senha deve ter no mínimo 8 caracteres'); return; }
+    if (newPassword.length < PASSWORD_MIN_LENGTH) { Alert.alert('Atenção', `A nova senha deve ter no mínimo ${PASSWORD_MIN_LENGTH} caracteres`); return; }
+    if (newPassword.length > PASSWORD_MAX_LENGTH) { Alert.alert('Atenção', `A nova senha deve ter no máximo ${PASSWORD_MAX_LENGTH} caracteres`); return; }
+    if (!PASSWORD_UPPERCASE_REGEX.test(newPassword)) { Alert.alert('Atenção', 'A nova senha precisa de uma letra maiúscula'); return; }
+    if (!PASSWORD_DIGIT_REGEX.test(newPassword)) { Alert.alert('Atenção', 'A nova senha precisa de um número'); return; }
+    if (!PASSWORD_SYMBOL_REGEX.test(newPassword)) { Alert.alert('Atenção', 'A nova senha precisa de um símbolo'); return; }
     if (newPassword !== confirm) { Alert.alert('Atenção', 'As senhas não coincidem'); return; }
     if (newPassword === currentPassword) { Alert.alert('Atenção', 'A nova senha deve ser diferente da atual'); return; }
 
@@ -88,14 +96,17 @@ export function AlterarSenhaScreen() {
 
         {/* Requisitos */}
         <View style={styles.requirements}>
-          <Text style={[styles.req, newPassword.length >= 8 && styles.reqOk]}>
-            {newPassword.length >= 8 ? '✅' : '○'} Mínimo 8 caracteres
+          <Text style={[styles.req, newPassword.length >= PASSWORD_MIN_LENGTH && styles.reqOk]}>
+            {newPassword.length >= PASSWORD_MIN_LENGTH ? '✅' : '○'} Mínimo {PASSWORD_MIN_LENGTH} caracteres
           </Text>
-          <Text style={[styles.req, /[A-Z]/.test(newPassword) && styles.reqOk]}>
-            {/[A-Z]/.test(newPassword) ? '✅' : '○'} Uma letra maiúscula
+          <Text style={[styles.req, PASSWORD_UPPERCASE_REGEX.test(newPassword) && styles.reqOk]}>
+            {PASSWORD_UPPERCASE_REGEX.test(newPassword) ? '✅' : '○'} Uma letra maiúscula
           </Text>
-          <Text style={[styles.req, /[0-9]/.test(newPassword) && styles.reqOk]}>
-            {/[0-9]/.test(newPassword) ? '✅' : '○'} Um número
+          <Text style={[styles.req, PASSWORD_DIGIT_REGEX.test(newPassword) && styles.reqOk]}>
+            {PASSWORD_DIGIT_REGEX.test(newPassword) ? '✅' : '○'} Um número
+          </Text>
+          <Text style={[styles.req, PASSWORD_SYMBOL_REGEX.test(newPassword) && styles.reqOk]}>
+            {PASSWORD_SYMBOL_REGEX.test(newPassword) ? '✅' : '○'} Um símbolo
           </Text>
         </View>
 

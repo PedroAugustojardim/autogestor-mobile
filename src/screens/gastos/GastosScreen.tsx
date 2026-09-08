@@ -9,17 +9,10 @@ import { useExpenseStore } from '../../store/expenseStore';
 import { useVehicleStore } from '../../store/vehicleStore';
 import { Expense } from '../../types/expense';
 import { GastosStackParamList } from '../../types/navigation';
+import { formatDateBR as formatDate } from '../../utils/date';
+import { formatCurrencyBRL as formatCurrency } from '../../utils/currency';
 
 type Nav = NativeStackNavigationProp<GastosStackParamList>;
-
-function formatCurrency(value: string | number) {
-  return `R$ ${Number(value).toFixed(2).replace('.', ',')}`;
-}
-
-function formatDate(dateStr: string) {
-  const [y, m, d] = dateStr.split('-');
-  return `${d}/${m}/${y}`;
-}
 
 function ExpenseItem({ item, vehicleId, onDelete }: { item: Expense; vehicleId: number; onDelete: (id: number) => void }) {
   const navigation = useNavigation<Nav>();

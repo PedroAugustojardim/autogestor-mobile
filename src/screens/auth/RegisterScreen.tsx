@@ -9,12 +9,14 @@ import { z } from 'zod';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../types/navigation';
 import { useAuthStore } from '../../store/authStore';
+import { passwordSchema } from '../../utils/password';
 
 const schema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+  password: passwordSchema,
   confirmPassword: z.string(),
+  inviteCode: z.string().trim().min(1, 'Código de convite é obrigatório'),
 }).refine((d) => d.password === d.confirmPassword, {
   message: 'As senhas não coincidem',
   path: ['confirmPassword'],
@@ -36,7 +38,7 @@ export function RegisterScreen({ navigation }: Props) {
 
   const onSubmit = async (data: FormData) => {
     try {
-      await registerUser(data.name, data.email, data.password);
+      await registerUser(data.name, data.email, data.password, data.inviteCode);
     } catch (err: any) {
       const msg = err?.response?.data?.error || 'Erro ao criar conta. Tente novamente.';
       Alert.alert('Erro', msg);
@@ -54,18 +56,20 @@ export function RegisterScreen({ navigation }: Props) {
         <Text style={styles.subtitle}>Comece a controlar seus gastos</Text>
 
         <View style={styles.form}>
-          {(['name', 'email', 'password', 'confirmPassword'] as const).map((field) => {
+          {(['name', 'email', 'password', 'confirmPassword', 'inviteCode'] as const).map((field) => {
             const labels: Record<string, string> = {
               name: 'Nome completo',
               email: 'Email',
               password: 'Senha',
               confirmPassword: 'Confirmar senha',
+              inviteCode: 'Código de convite',
             };
             const placeholders: Record<string, string> = {
               name: 'Seu nome',
               email: 'seu@email.com',
-              password: 'Mínimo 6 caracteres',
+              password: 'Mínimo 8, com maiúscula, número e símbolo',
               confirmPassword: 'Repita a senha',
+              inviteCode: 'Código recebido por email',
             };
             return (
               <View key={field}>
