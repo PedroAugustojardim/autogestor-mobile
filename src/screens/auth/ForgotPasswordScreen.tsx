@@ -48,8 +48,11 @@ export function ForgotPasswordScreen({ navigation }: Props) {
         <Text style={styles.successText}>
           Se o email estiver cadastrado, você receberá as instruções para redefinir sua senha.
         </Text>
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.buttonText}>Voltar ao Login</Text>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('ResetPassword')}>
+          <Text style={styles.buttonText}>Já tenho um código</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.linkBtn} onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.linkText}>Voltar ao Login</Text>
         </TouchableOpacity>
       </View>
     );
@@ -96,6 +99,10 @@ export function ForgotPasswordScreen({ navigation }: Props) {
               : <Text style={styles.buttonText}>Enviar instruções</Text>
             }
           </TouchableOpacity>
+
+          <TouchableOpacity style={styles.linkBtn} onPress={() => navigation.navigate('ResetPassword')}>
+            <Text style={styles.linkText}>Já tenho um código</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -119,6 +126,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: '#212121', backgroundColor: '#FAFAFA',
   },
   inputError: { borderColor: '#E53935' },
+  linkBtn: { marginTop: 16, paddingVertical: 8, alignItems: 'center' },
+  linkText: { color: '#1B5E20', fontSize: 14, fontWeight: '600' },
   errorText: { color: '#E53935', fontSize: 12, marginTop: 4 },
   button: { backgroundColor: '#1B5E20', borderRadius: 8, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
   buttonDisabled: { opacity: 0.6 },
