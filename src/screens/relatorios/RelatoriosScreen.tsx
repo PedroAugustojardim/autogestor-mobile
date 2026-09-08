@@ -1,18 +1,80 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, RefreshControl,
+  ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
+import RNHTMLtoPDF from 'react-native-html-to-pdf';
+import Share from 'react-native-share';
+import api from '../../services/api';
 import { useVehicleStore } from '../../store/vehicleStore';
 import { useReportStore } from '../../store/reportStore';
 import { useAuthStore } from '../../store/authStore';
-import { MonthlyPoint, CategoryReport } from '../../types/report';
+import { MonthlyPoint, CategoryReport, PdfReportData } from '../../types/report';
+import { formatCurrencyBRL as formatCurrency } from '../../utils/currency';
+
+// Categoria, descrição e apelido do veículo são texto livre do usuário — nunca interpolar
+// direto no HTML sem escapar, ou um "<"/"&" na descrição de um gasto quebra a tabela do PDF.
+function escapeHtml(v: string): string {
+  return v
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function buildReportHtml(data: PdfReportData): string {
+  const veiculoNome = escapeHtml(data.veiculo.apelido ?? `${data.veiculo.marca} ${data.veiculo.modelo}`);
+  const linhasCategorias = data.categorias.map((c) => `
+    <tr>
+      <td>${escapeHtml(c.icone ?? '')} ${escapeHtml(c.nome)}</td>
+      <td style="text-align:right">${formatCurrency(c.total)}</td>
+      <td style="text-align:right">${c.percentual}%</td>
+    </tr>`).join('');
+  const linhasGastos = data.gastos.map((g) => `
+    <tr>
+      <td>${g.data.split('-').reverse().join('/')}</td>
+      <td>${escapeHtml(g.categoria)}</td>
+      <td>${escapeHtml(g.descricao ?? '')}</td>
+      <td style="text-align:right">${formatCurrency(g.valor)}</td>
+    </tr>`).join('');
+
+  return `
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <style>
+          body { font-family: -apple-system, Helvetica, Arial, sans-serif; color: #212121; padding: 24px; }
+          h1 { color: #1B5E20; font-size: 22px; margin-bottom: 4px; }
+          .sub { color: #757575; font-size: 13px; margin-bottom: 20px; }
+          .total { font-size: 18px; font-weight: bold; color: #1B5E20; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+          th { text-align: left; font-size: 11px; text-transform: uppercase; color: #9E9E9E; border-bottom: 1px solid #E0E0E0; padding: 6px 4px; }
+          td { font-size: 13px; padding: 6px 4px; border-bottom: 1px solid #F5F5F5; }
+          .footer { color: #9E9E9E; font-size: 10px; margin-top: 24px; }
+        </style>
+      </head>
+      <body>
+        <h1>Relatório de Gastos — AutoGestor</h1>
+        <div class="sub">${veiculoNome} · ${data.periodo.label}</div>
+        <div class="total">Total do período: ${formatCurrency(data.total)} (${data.quantidade} gasto${data.quantidade === 1 ? '' : 's'})</div>
+
+        <table>
+          <thead><tr><th>Categoria</th><th style="text-align:right">Total</th><th style="text-align:right">%</th></tr></thead>
+          <tbody>${linhasCategorias || '<tr><td colspan="3">Nenhum gasto no período</td></tr>'}</tbody>
+        </table>
+
+        <table>
+          <thead><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th style="text-align:right">Valor</th></tr></thead>
+          <tbody>${linhasGastos || '<tr><td colspan="4">Nenhum gasto no período</td></tr>'}</tbody>
+        </table>
+
+        <div class="footer">Gerado em ${new Date(data.geradoEm).toLocaleString('pt-BR')} pelo AutoGestor</div>
+      </body>
+    </html>`;
+}
 
 const MESES_NOME = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-
-function formatCurrency(v: number) {
-  return `R$ ${v.toFixed(2).replace('.', ',')}`;
-}
 
 // Gráfico de barras simples (sem dependência externa)
 function BarChart({ data }: { data: MonthlyPoint[] }) {
@@ -22,7 +84,7 @@ function BarChart({ data }: { data: MonthlyPoint[] }) {
       {data.map((d, i) => (
         <View key={i} style={chart.col}>
           <Text style={chart.value}>
-            {d.total > 0 ? `R$${(d.total / 100).toFixed(0)}` : ''}
+            {d.total > 0 ? `R$${d.total.toFixed(0)}` : ''}
           </Text>
           <View style={chart.barWrap}>
             <View style={[chart.bar, { height: Math.max((d.total / max) * 120, d.total > 0 ? 4 : 0) }]} />
@@ -66,6 +128,35 @@ export function RelatoriosScreen() {
 
   const [tab, setTab] = useState<'gastos' | 'categorias' | 'combustivel' | 'anual'>('gastos');
   const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const exportPdf = async () => {
+    if (!activeVehicle) return;
+    setExporting(true);
+    try {
+      const now = new Date();
+      const { data } = await api.get<PdfReportData>(
+        `/vehicles/${activeVehicle.id}/reports/pdf?mes=${now.getMonth() + 1}&ano=${now.getFullYear()}`,
+      );
+      const html = buildReportHtml(data);
+      const file = await RNHTMLtoPDF.convert({
+        html,
+        fileName: `autogestor-relatorio-${data.periodo.mes}-${data.periodo.ano}`,
+        directory: 'Documents',
+      });
+      if (!file.filePath) throw new Error('PDF não gerado');
+      await Share.open({
+        title: 'Relatório AutoGestor',
+        url: `file://${file.filePath}`,
+        type: 'application/pdf',
+        failOnCancel: false,
+      });
+    } catch (err: any) {
+      Alert.alert('Erro', err?.response?.data?.error ?? 'Não foi possível gerar o PDF. Tente novamente.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const load = async () => {
     if (!activeVehicle) return;
@@ -102,10 +193,24 @@ export function RelatoriosScreen() {
     >
       {/* Cabeçalho */}
       <View style={styles.header}>
-        <Text style={styles.title}>Relatórios</Text>
-        <Text style={styles.vehicle}>
-          {activeVehicle.apelido ?? `${activeVehicle.marca} ${activeVehicle.modelo}`}
-        </Text>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.title}>Relatórios</Text>
+            <Text style={styles.vehicle}>
+              {activeVehicle.apelido ?? `${activeVehicle.marca} ${activeVehicle.modelo}`}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.exportBtn}
+            onPress={exportPdf}
+            disabled={exporting}
+          >
+            {exporting
+              ? <ActivityIndicator color="#1B5E20" size="small" />
+              : <Text style={styles.exportBtnText}>📄 Exportar PDF</Text>
+            }
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Tabs */}
@@ -320,8 +425,14 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 20, fontWeight: 'bold', color: '#1B5E20', marginBottom: 8, textAlign: 'center' },
   emptySubtitle: { fontSize: 14, color: '#757575', textAlign: 'center' },
   header: { backgroundColor: '#1B5E20', padding: 24, paddingTop: 56 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   title: { fontSize: 26, fontWeight: 'bold', color: '#FFF' },
   vehicle: { fontSize: 14, color: '#A5D6A7', marginTop: 4 },
+  exportBtn: {
+    backgroundColor: '#FFF', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12,
+    minWidth: 130, alignItems: 'center', justifyContent: 'center',
+  },
+  exportBtnText: { color: '#1B5E20', fontSize: 12, fontWeight: '700' },
   tabs: { flexDirection: 'row', backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E0E0E0' },
   tab: { flex: 1, paddingVertical: 12, alignItems: 'center' },
   tabActive: { borderBottomWidth: 2, borderBottomColor: '#1B5E20' },

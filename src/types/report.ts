@@ -52,3 +52,26 @@ export interface YearSummary {
   totalAno: number;
   meses: YearMes[];
 }
+
+export interface PdfReportGasto {
+  data: string;
+  categoria: string;
+  descricao: string | null;
+  valor: number;
+}
+
+export interface PdfReportData {
+  veiculo: {
+    tipo: string;
+    marca: string;
+    modelo: string;
+    ano: number | null;
+    apelido: string | null;
+  };
+  periodo: { mes: number; ano: number; label: string };
+  total: number;
+  quantidade: number;
+  categorias: CategoryReport[];
+  gastos: PdfReportGasto[];
+  geradoEm: string;
+}
