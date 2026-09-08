@@ -8,8 +8,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVehicleStore } from '../../store/vehicleStore';
 import { useAuthStore } from '../../store/authStore';
 import { useExpenseStore } from '../../store/expenseStore';
+import { useMaintenanceStore } from '../../store/maintenanceStore';
+import { useNotificationStore } from '../../store/notificationStore';
 import { VEHICLE_ICONS, VEHICLE_LABELS } from '../../types/vehicle';
 import { HomeStackParamList } from '../../types/navigation';
+import { formatDateBR as formatReminderDate } from '../../utils/date';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -17,12 +20,28 @@ export function HomeScreen() {
   const { vehicles, activeVehicle, isLoading, error, fetchVehicles } = useVehicleStore();
   const { user } = useAuthStore();
   const { summary, fetchSummary } = useExpenseStore();
+  const { nextReminder, fetchNextReminder } = useMaintenanceStore();
+  const { unreadCount, fetchUnreadCount } = useNotificationStore();
   const navigation = useNavigation<Nav>();
 
-  useEffect(() => { fetchVehicles(); }, []);
+  useEffect(() => { fetchVehicles(); fetchUnreadCount(); }, []);
   useEffect(() => {
-    if (activeVehicle) fetchSummary(activeVehicle.id);
+    if (activeVehicle) {
+      fetchSummary(activeVehicle.id);
+      fetchNextReminder(activeVehicle.id);
+    }
   }, [activeVehicle?.id]);
+
+  // Puxar-para-atualizar deve refletir tudo que aparece nesta tela, não só a
+  // lista de veículos — senão o spinner passa a impressão de ter atualizado o
+  // badge de notificação e o próximo lembrete quando na verdade não tocou neles.
+  const handleRefresh = async () => {
+    await Promise.all([
+      fetchVehicles(),
+      fetchUnreadCount(),
+      ...(activeVehicle ? [fetchNextReminder(activeVehicle.id)] : []),
+    ]);
+  };
 
   if (isLoading && vehicles.length === 0) {
     return (
@@ -67,11 +86,23 @@ export function HomeScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={fetchVehicles} />}
+      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />}
     >
       <View style={styles.header}>
-        <Text style={styles.greeting}>Olá, {user?.name?.split(' ')[0]} 👋</Text>
-        <Text style={styles.headerSub}>Acompanhe seus gastos</Text>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.greeting}>Olá, {user?.name?.split(' ')[0]} 👋</Text>
+            <Text style={styles.headerSub}>Acompanhe seus gastos</Text>
+          </View>
+          <TouchableOpacity style={styles.bellBtn} onPress={() => navigation.navigate('Notificacoes')}>
+            <Text style={styles.bellIcon}>🔔</Text>
+            {unreadCount > 0 && (
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Card do veículo */}
@@ -113,13 +144,45 @@ export function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Placeholder lembretes */}
+      {/* Próximo lembrete + acesso à Manutenção */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Próximos lembretes</Text>
-        <View style={styles.emptySection}>
-          <Text style={styles.emptySectionText}>Nenhum lembrete cadastrado</Text>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Próximos lembretes</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Manutencao')}>
+            <Text style={styles.sectionLink}>Ver tudo →</Text>
+          </TouchableOpacity>
         </View>
+        {nextReminder ? (
+          <TouchableOpacity style={styles.reminderCard} onPress={() => navigation.navigate('Manutencao')}>
+            <Text style={styles.reminderIcon}>🔧</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.reminderTipo}>{nextReminder.tipo}</Text>
+              <Text style={styles.reminderData}>Previsto para {formatReminderDate(nextReminder.dataPrevista)}</Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.emptySection}>
+            <Text style={styles.emptySectionText}>Nenhum lembrete cadastrado</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Manutencao')} style={{ marginTop: 8 }}>
+              <Text style={styles.sectionLink}>Registrar manutenção</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
+
+      {/* Consultas SP — só pra Premium */}
+      {user?.plano !== 'gratuito' && (
+        <View style={styles.section}>
+          <TouchableOpacity style={styles.consultaCard} onPress={() => navigation.navigate('Consultas')}>
+            <Text style={styles.consultaIcon}>🚨</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.consultaTitle}>Consultas SP</Text>
+              <Text style={styles.consultaSubtitle}>Multas, IPVA, licenciamento e recall</Text>
+            </View>
+            <Text style={styles.consultaArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -150,8 +213,17 @@ const styles = StyleSheet.create({
 
   // Header
   header: { backgroundColor: '#1B5E20', padding: 24, paddingTop: 48 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   greeting: { fontSize: 22, fontWeight: 'bold', color: '#FFF' },
   headerSub: { fontSize: 14, color: '#A5D6A7', marginTop: 2 },
+  bellBtn: { padding: 4 },
+  bellIcon: { fontSize: 24 },
+  bellBadge: {
+    position: 'absolute', top: -2, right: -4,
+    backgroundColor: '#E53935', borderRadius: 9, minWidth: 18, height: 18,
+    alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4,
+  },
+  bellBadgeText: { color: '#FFF', fontSize: 10, fontWeight: '700' },
 
   // Vehicle card
   vehicleCard: {
@@ -182,10 +254,28 @@ const styles = StyleSheet.create({
 
   // Section
   section: { marginHorizontal: 16, marginBottom: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#212121', marginBottom: 8 },
+  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#212121' },
+  sectionLink: { fontSize: 13, color: '#1B5E20', fontWeight: '600' },
   emptySection: {
     backgroundColor: '#FFF', borderRadius: 10, padding: 20,
     alignItems: 'center',
   },
   emptySectionText: { color: '#BDBDBD', fontSize: 14 },
+  reminderCard: {
+    backgroundColor: '#FFF', borderRadius: 10, padding: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 12, elevation: 1,
+  },
+  reminderIcon: { fontSize: 24 },
+  reminderTipo: { fontSize: 14, fontWeight: '700', color: '#212121' },
+  reminderData: { fontSize: 12, color: '#757575', marginTop: 2 },
+
+  consultaCard: {
+    backgroundColor: '#FFF', borderRadius: 10, padding: 16,
+    flexDirection: 'row', alignItems: 'center', gap: 12, elevation: 1,
+  },
+  consultaIcon: { fontSize: 28 },
+  consultaTitle: { fontSize: 15, fontWeight: '700', color: '#212121' },
+  consultaSubtitle: { fontSize: 12, color: '#757575', marginTop: 2 },
+  consultaArrow: { fontSize: 24, color: '#BDBDBD' },
 });

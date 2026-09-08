@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
   TouchableOpacity, Alert, Switch,
@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuthStore } from '../../store/authStore';
 import { PerfilStackParamList } from '../../types/navigation';
+import api from '../../services/api';
 
 type Nav = NativeStackNavigationProp<PerfilStackParamList>;
 
@@ -37,6 +38,28 @@ export function PerfilScreen() {
 
   const plano = user?.plano ?? 'gratuito';
   const planInfo = PLAN_LABELS[plano];
+
+  // undefined logo após login/register (a resposta desses endpoints não inclui o
+  // campo) — só GET /users/me (via restoreSession) devolve; default true bate com
+  // o default da coluna no banco.
+  const [notifEnabled, setNotifEnabled] = useState(user?.notificationsEnabled ?? true);
+  const [savingNotif, setSavingNotif] = useState(false);
+
+  const handleToggleNotifications = async (value: boolean) => {
+    setNotifEnabled(value);
+    setSavingNotif(true);
+    try {
+      await api.put('/users/me/notifications', { notificationsEnabled: value });
+    } catch {
+      // Só reverte se o switch ainda mostra o valor otimista desta chamada — se
+      // outro toggle já mudou o valor de novo nesse meio-tempo, não pisa em cima
+      // do estado mais recente.
+      setNotifEnabled((current) => (current === value ? !value : current));
+      Alert.alert('Erro', 'Não foi possível atualizar a preferência de notificações');
+    } finally {
+      setSavingNotif(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert('Sair', 'Deseja encerrar a sessão?', [
@@ -102,8 +125,9 @@ export function PerfilScreen() {
           <Text style={styles.rowIcon}>🔔</Text>
           <Text style={[styles.rowLabel, { flex: 1 }]}>Notificações</Text>
           <Switch
-            value={user ? true : false}
-            onValueChange={() => {}}
+            value={notifEnabled}
+            onValueChange={handleToggleNotifications}
+            disabled={savingNotif}
             trackColor={{ false: '#E0E0E0', true: '#A5D6A7' }}
             thumbColor="#1B5E20"
           />
