@@ -10,11 +10,16 @@ export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
+  ResetPassword: undefined;
 };
 
 export type HomeStackParamList = {
   HomeMain: undefined;
   VehicleRegister: undefined;
+  Manutencao: undefined;
+  NewMaintenance: { vehicleId: number };
+  Notificacoes: undefined;
+  Consultas: undefined;
 };
 
 export type GastosStackParamList = {

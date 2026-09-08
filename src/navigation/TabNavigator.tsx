@@ -4,6 +4,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, StyleSheet } from 'react-native';
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { VehicleRegisterScreen } from '../screens/vehicle/VehicleRegisterScreen';
+import { ManutencaoScreen } from '../screens/manutencao/ManutencaoScreen';
+import { NewMaintenanceScreen } from '../screens/manutencao/NewMaintenanceScreen';
+import { NotificacoesScreen } from '../screens/notificacoes/NotificacoesScreen';
+import { ConsultasScreen } from '../screens/consultas/ConsultasScreen';
 import { GastosNavigator } from './GastosNavigator';
 import { RelatoriosScreen } from '../screens/relatorios/RelatoriosScreen';
 import { PerfilNavigator } from './PerfilNavigator';
@@ -19,6 +23,10 @@ function HomeStackNavigator() {
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
       <HomeStack.Screen name="VehicleRegister" component={VehicleRegisterScreen} options={{ presentation: 'modal' }} />
+      <HomeStack.Screen name="Manutencao" component={ManutencaoScreen} />
+      <HomeStack.Screen name="NewMaintenance" component={NewMaintenanceScreen} options={{ presentation: 'modal' }} />
+      <HomeStack.Screen name="Notificacoes" component={NotificacoesScreen} />
+      <HomeStack.Screen name="Consultas" component={ConsultasScreen} />
     </HomeStack.Navigator>
   );
 }
