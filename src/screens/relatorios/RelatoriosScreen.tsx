@@ -5,12 +5,16 @@ import {
 } from 'react-native';
 import RNHTMLtoPDF from 'react-native-html-to-pdf';
 import Share from 'react-native-share';
+import { useNavigation } from '@react-navigation/native';
+import Feather from 'react-native-vector-icons/Feather';
 import api from '../../services/api';
 import { useVehicleStore } from '../../store/vehicleStore';
 import { useReportStore } from '../../store/reportStore';
 import { useAuthStore } from '../../store/authStore';
 import { MonthlyPoint, CategoryReport, PdfReportData } from '../../types/report';
 import { formatCurrencyBRL as formatCurrency } from '../../utils/currency';
+import { PrimaryButton } from '../../components/PrimaryButton';
+import { colors } from '../../theme/colors';
 
 // Categoria, descrição e apelido do veículo são texto livre do usuário — nunca interpolar
 // direto no HTML sem escapar, ou um "<"/"&" na descrição de um gasto quebra a tabela do PDF.
@@ -23,6 +27,8 @@ function escapeHtml(v: string): string {
     .replace(/'/g, '&#39;');
 }
 
+// Template do PDF exportado fica fora de escopo do redesign — é um documento estático
+// aberto fora do app, mantém a paleta antiga de propósito.
 function buildReportHtml(data: PdfReportData): string {
   const veiculoNome = escapeHtml(data.veiculo.apelido ?? `${data.veiculo.marca} ${data.veiculo.modelo}`);
   const linhasCategorias = data.categorias.map((c) => `
@@ -79,6 +85,7 @@ const MESES_NOME = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set
 // Gráfico de barras simples (sem dependência externa)
 function BarChart({ data }: { data: MonthlyPoint[] }) {
   const max = data.length > 0 ? Math.max(...data.map((d) => d.total), 1) : 1;
+  const lastIdx = data.length - 1;
   return (
     <View style={chart.container}>
       {data.map((d, i) => (
@@ -87,9 +94,13 @@ function BarChart({ data }: { data: MonthlyPoint[] }) {
             {d.total > 0 ? `R$${d.total.toFixed(0)}` : ''}
           </Text>
           <View style={chart.barWrap}>
-            <View style={[chart.bar, { height: Math.max((d.total / max) * 120, d.total > 0 ? 4 : 0) }]} />
+            <View style={[
+              chart.bar,
+              { height: Math.max((d.total / max) * 120, d.total > 0 ? 4 : 0) },
+              i === lastIdx && { backgroundColor: colors.accent },
+            ]} />
           </View>
-          <Text style={chart.label}>{d.label}</Text>
+          <Text style={[chart.label, i === lastIdx && chart.labelActive]}>{d.label}</Text>
         </View>
       ))}
     </View>
@@ -116,7 +127,18 @@ function CategoryBar({ cat, total }: { cat: CategoryReport; total: number }) {
   );
 }
 
+function MetricCard({ icon, value, label }: { icon: React.ComponentProps<typeof Feather>['name']; value: string; label: string }) {
+  return (
+    <View style={styles.metricCard}>
+      <Feather name={icon} size={20} color={colors.accent} style={{ marginBottom: 8 }} />
+      <Text style={styles.metricValue}>{value}</Text>
+      <Text style={styles.metricLabel}>{label}</Text>
+    </View>
+  );
+}
+
 export function RelatoriosScreen() {
+  const navigation = useNavigation();
   const { activeVehicle } = useVehicleStore();
   const { user } = useAuthStore();
   const isPremium = user?.plano !== 'gratuito';
@@ -189,7 +211,7 @@ export function RelatoriosScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1B5E20" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
     >
       {/* Cabeçalho */}
       <View style={styles.header}>
@@ -206,8 +228,13 @@ export function RelatoriosScreen() {
             disabled={exporting}
           >
             {exporting
-              ? <ActivityIndicator color="#1B5E20" size="small" />
-              : <Text style={styles.exportBtnText}>📄 Exportar PDF</Text>
+              ? <ActivityIndicator color={colors.textPrimary} size="small" />
+              : (
+                <>
+                  <Feather name="download" size={13} color={colors.textPrimary} />
+                  <Text style={styles.exportBtnText}>Exportar PDF</Text>
+                </>
+              )
             }
           </TouchableOpacity>
         </View>
@@ -222,17 +249,17 @@ export function RelatoriosScreen() {
             onPress={() => setTab(t)}
           >
             <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-              {t === 'gastos' ? '📊 Gastos'
-                : t === 'categorias' ? '🥧 Categ.'
-                : t === 'combustivel' ? '⛽ Combust.'
-                : `📅 Anual${isPremium ? '' : ' 🔒'}`}
+              {t === 'gastos' ? 'Gastos'
+                : t === 'categorias' ? 'Categ.'
+                : t === 'combustivel' ? 'Combust.'
+                : `Anual${isPremium ? '' : ' 🔒'}`}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       {isLoading && !refreshing && (
-        <ActivityIndicator color="#1B5E20" style={{ marginTop: 40 }} />
+        <ActivityIndicator color={colors.accent} style={{ marginTop: 40 }} />
       )}
 
       {error && (
@@ -255,7 +282,7 @@ export function RelatoriosScreen() {
                     {MESES_NOME[m.mes - 1]}/{String(m.ano).slice(2)}
                   </Text>
                   <Text style={styles.monthQtd}>{m.quantidade} gasto(s)</Text>
-                  <Text style={[styles.monthTotal, m.total > 0 && styles.monthTotalRed]}>
+                  <Text style={styles.monthTotal}>
                     {formatCurrency(m.total)}
                   </Text>
                 </View>
@@ -303,36 +330,12 @@ export function RelatoriosScreen() {
         <>
           {/* Cards de métricas */}
           <View style={styles.metricsRow}>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricIcon}>⛽</Text>
-              <Text style={styles.metricValue}>
-                {fuelReport ? `${fuelReport.totalLitros.toFixed(1)}L` : '—'}
-              </Text>
-              <Text style={styles.metricLabel}>Litros abastecidos</Text>
-            </View>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricIcon}>💰</Text>
-              <Text style={styles.metricValue}>
-                {fuelReport ? `R$${fuelReport.precoMedioLitro.toFixed(2)}` : '—'}
-              </Text>
-              <Text style={styles.metricLabel}>Preço médio/litro</Text>
-            </View>
+            <MetricCard icon="droplet" value={fuelReport ? `${fuelReport.totalLitros.toFixed(1)}L` : '—'} label="Litros abastecidos" />
+            <MetricCard icon="dollar-sign" value={fuelReport ? `R$${fuelReport.precoMedioLitro.toFixed(2)}` : '—'} label="Preço médio/litro" />
           </View>
           <View style={styles.metricsRow}>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricIcon}>🛣️</Text>
-              <Text style={styles.metricValue}>
-                {fuelReport?.kmPorLitro ? `${fuelReport.kmPorLitro} km/L` : '—'}
-              </Text>
-              <Text style={styles.metricLabel}>Consumo médio</Text>
-            </View>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricIcon}>🔢</Text>
-              <Text style={styles.metricValue}>
-                {fuelReport ? fuelReport.abastecimentos : '—'}
-              </Text>
-              <Text style={styles.metricLabel}>Abastecimentos</Text>
-            </View>
+            <MetricCard icon="trending-up" value={fuelReport?.kmPorLitro ? `${fuelReport.kmPorLitro} km/L` : '—'} label="Consumo médio" />
+            <MetricCard icon="hash" value={fuelReport ? String(fuelReport.abastecimentos) : '—'} label="Abastecimentos" />
           </View>
 
           {/* Histórico de abastecimentos */}
@@ -373,25 +376,24 @@ export function RelatoriosScreen() {
       {tab === 'anual' && !isLoading && (
         !isPremium ? (
           <View style={styles.card}>
-            <Text style={{ fontSize: 40, textAlign: 'center', marginBottom: 12 }}>🔒</Text>
-            <Text style={{ fontSize: 17, fontWeight: 'bold', color: '#1B5E20', textAlign: 'center', marginBottom: 8 }}>
-              Recurso Premium
-            </Text>
-            <Text style={{ fontSize: 14, color: '#757575', textAlign: 'center', marginBottom: 20, lineHeight: 20 }}>
+            <Feather name="lock" size={32} color={colors.textTertiary} style={{ alignSelf: 'center', marginBottom: 12 }} />
+            <Text style={styles.lockedTitle}>Recurso Premium</Text>
+            <Text style={styles.lockedSubtitle}>
               O resumo anual está disponível apenas no plano Premium. Faça upgrade para desbloquear.
             </Text>
-            <TouchableOpacity style={{ backgroundColor: '#1B5E20', borderRadius: 8, paddingVertical: 12, alignItems: 'center' }} onPress={() => {}}>
-              <Text style={{ color: '#FFF', fontSize: 15, fontWeight: '700' }}>Ver planos Premium</Text>
-            </TouchableOpacity>
+            <PrimaryButton
+              label="Ver planos Premium"
+              onPress={() => navigation.getParent()?.navigate('Perfil', { screen: 'Planos' })}
+            />
           </View>
         ) : (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Resumo anual {yearSummary?.ano}</Text>
             {yearSummary ? (
               <>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <Text style={{ fontSize: 14, color: '#757575' }}>Total do ano</Text>
-                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1B5E20' }}>
+                <View style={styles.yearTotalRow}>
+                  <Text style={styles.yearTotalLabel}>Total do ano</Text>
+                  <Text style={styles.yearTotalValue}>
                     {`R$ ${yearSummary.totalAno.toFixed(2).replace('.', ',')}`}
                   </Text>
                 </View>
@@ -400,7 +402,7 @@ export function RelatoriosScreen() {
                   <View key={i} style={styles.monthRow}>
                     <Text style={styles.monthLabel}>{m.label}</Text>
                     <Text style={styles.monthQtd}>{m.quantidade} gasto(s)</Text>
-                    <Text style={[styles.monthTotal, m.total > 0 && styles.monthTotalRed]}>
+                    <Text style={styles.monthTotal}>
                       {`R$ ${m.total.toFixed(2).replace('.', ',')}`}
                     </Text>
                   </View>
@@ -419,75 +421,80 @@ export function RelatoriosScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F5F5F5', padding: 32 },
-  emptyIcon: { fontSize: 56, marginBottom: 16 },
-  emptyTitle: { fontSize: 20, fontWeight: 'bold', color: '#1B5E20', marginBottom: 8, textAlign: 'center' },
-  emptySubtitle: { fontSize: 14, color: '#757575', textAlign: 'center' },
-  header: { backgroundColor: '#1B5E20', padding: 24, paddingTop: 56 },
+  container: { flex: 1, backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg, padding: 32 },
+  emptyIcon: { fontSize: 48, marginBottom: 16 },
+  emptyTitle: { fontSize: 19, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
+  emptySubtitle: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+  header: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 8 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  title: { fontSize: 26, fontWeight: 'bold', color: '#FFF' },
-  vehicle: { fontSize: 14, color: '#A5D6A7', marginTop: 4 },
+  title: { fontSize: 21, fontWeight: '700', color: colors.textPrimary },
+  vehicle: { fontSize: 12.5, color: colors.textSecondary, marginTop: 2 },
   exportBtn: {
-    backgroundColor: '#FFF', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12,
-    minWidth: 130, alignItems: 'center', justifyContent: 'center',
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 10,
+    paddingVertical: 9, paddingHorizontal: 13,
   },
-  exportBtnText: { color: '#1B5E20', fontSize: 12, fontWeight: '700' },
-  tabs: { flexDirection: 'row', backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#E0E0E0' },
-  tab: { flex: 1, paddingVertical: 12, alignItems: 'center' },
-  tabActive: { borderBottomWidth: 2, borderBottomColor: '#1B5E20' },
-  tabText: { fontSize: 12, color: '#9E9E9E', fontWeight: '600' },
-  tabTextActive: { color: '#1B5E20' },
-  card: { backgroundColor: '#FFF', borderRadius: 12, margin: 16, padding: 16, elevation: 1 },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: '#212121', marginBottom: 16 },
-  divider: { height: 1, backgroundColor: '#F0F0F0', marginVertical: 12 },
+  exportBtnText: { color: colors.textPrimary, fontSize: 12, fontWeight: '700' },
+  tabs: { flexDirection: 'row', marginTop: 18, marginHorizontal: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 4 },
+  tab: { flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 9 },
+  tabActive: { backgroundColor: colors.accent },
+  tabText: { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
+  tabTextActive: { color: colors.white, fontWeight: '700' },
+  card: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, margin: 16, padding: 18 },
+  cardTitle: { fontSize: 14.5, fontWeight: '700', color: colors.textPrimary, marginBottom: 16 },
+  divider: { height: 1, backgroundColor: colors.divider, marginVertical: 12 },
   monthRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
-  monthLabel: { width: 52, fontSize: 13, color: '#757575' },
-  monthQtd: { flex: 1, fontSize: 12, color: '#9E9E9E' },
-  monthTotal: { fontSize: 14, fontWeight: '600', color: '#212121' },
-  monthTotalRed: { color: '#C62828' },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F0F0F0' },
-  totalLabel: { fontSize: 14, fontWeight: '700', color: '#212121' },
-  totalValor: { fontSize: 14, fontWeight: '700', color: '#1B5E20' },
-  noData: { color: '#9E9E9E', textAlign: 'center', paddingVertical: 24 },
-  errorBox: { margin: 16, padding: 12, backgroundColor: '#FFEBEE', borderRadius: 8 },
-  errorText: { color: '#C62828', fontSize: 13 },
-  totalMes: { fontSize: 18, fontWeight: 'bold', color: '#1B5E20', marginBottom: 12 },
+  monthLabel: { width: 52, fontSize: 13, color: colors.textSecondary },
+  monthQtd: { flex: 1, fontSize: 12, color: colors.textTertiary },
+  monthTotal: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.divider },
+  totalLabel: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  totalValor: { fontSize: 14, fontWeight: '700', color: colors.accent },
+  noData: { color: colors.textTertiary, textAlign: 'center', paddingVertical: 24 },
+  errorBox: { margin: 16, padding: 12, backgroundColor: colors.dangerSoftBg, borderRadius: 10 },
+  errorText: { color: colors.danger, fontSize: 13 },
+  totalMes: { fontSize: 17, fontWeight: 'bold', color: colors.textPrimary, marginBottom: 12 },
   metricsRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 12, marginTop: 16 },
   metricCard: {
-    flex: 1, backgroundColor: '#FFF', borderRadius: 12, padding: 16,
-    alignItems: 'center', elevation: 1,
+    flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 16,
+    alignItems: 'center',
   },
-  metricIcon: { fontSize: 28, marginBottom: 8 },
-  metricValue: { fontSize: 18, fontWeight: 'bold', color: '#1B5E20', marginBottom: 4 },
-  metricLabel: { fontSize: 11, color: '#757575', textAlign: 'center' },
+  metricValue: { fontSize: 17, fontWeight: 'bold', color: colors.textPrimary, marginBottom: 4 },
+  metricLabel: { fontSize: 11, color: colors.textSecondary, textAlign: 'center' },
   abRow: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: '#F5F5F5',
+    borderBottomWidth: 1, borderBottomColor: colors.divider,
   },
-  abData: { fontSize: 14, color: '#212121', fontWeight: '600' },
-  abTipo: { fontSize: 12, color: '#757575', marginTop: 2 },
-  abValor: { fontSize: 14, fontWeight: '700', color: '#C62828' },
-  abLitros: { fontSize: 12, color: '#757575', marginTop: 2 },
+  abData: { fontSize: 14, color: colors.textPrimary, fontWeight: '600' },
+  abTipo: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  abValor: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  abLitros: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  lockedTitle: { fontSize: 16, fontWeight: 'bold', color: colors.textPrimary, textAlign: 'center', marginBottom: 8 },
+  lockedSubtitle: { fontSize: 13.5, color: colors.textSecondary, textAlign: 'center', marginBottom: 18, lineHeight: 19 },
+  yearTotalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
+  yearTotalLabel: { fontSize: 14, color: colors.textSecondary },
+  yearTotalValue: { fontSize: 17, fontWeight: 'bold', color: colors.accent },
 });
 
 const chart = StyleSheet.create({
   container: { flexDirection: 'row', alignItems: 'flex-end', height: 160, marginBottom: 8 },
   col: { flex: 1, alignItems: 'center' },
   barWrap: { height: 120, justifyContent: 'flex-end', width: '60%' },
-  bar: { backgroundColor: '#1B5E20', borderRadius: 4, width: '100%' },
-  value: { fontSize: 8, color: '#757575', marginBottom: 2 },
-  label: { fontSize: 9, color: '#9E9E9E', marginTop: 4, textAlign: 'center' },
+  bar: { backgroundColor: colors.border, borderRadius: 4, width: '100%' },
+  value: { fontSize: 8, color: colors.textSecondary, marginBottom: 2 },
+  label: { fontSize: 9, color: colors.textTertiary, marginTop: 4, textAlign: 'center' },
+  labelActive: { color: colors.accent, fontWeight: '700' },
 });
 
 const catBar = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 14 },
   icon: { fontSize: 22, marginRight: 10, marginTop: 2 },
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  nome: { fontSize: 13, color: '#212121', flex: 1, fontWeight: '500' },
-  valor: { fontSize: 13, fontWeight: '700', color: '#212121', marginLeft: 8 },
-  track: { height: 8, backgroundColor: '#E8F5E9', borderRadius: 4, overflow: 'hidden' },
-  fill: { height: '100%', backgroundColor: '#1B5E20', borderRadius: 4 },
-  pct: { fontSize: 10, color: '#9E9E9E', marginTop: 2 },
+  nome: { fontSize: 13, color: colors.textPrimary, flex: 1, fontWeight: '500' },
+  valor: { fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginLeft: 8 },
+  track: { height: 8, backgroundColor: colors.border, borderRadius: 4, overflow: 'hidden' },
+  fill: { height: '100%', backgroundColor: colors.accent, borderRadius: 4 },
+  pct: { fontSize: 10, color: colors.textTertiary, marginTop: 2 },
 });

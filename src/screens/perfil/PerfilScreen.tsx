@@ -5,29 +5,34 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Feather from 'react-native-vector-icons/Feather';
 import { useAuthStore } from '../../store/authStore';
 import { PerfilStackParamList } from '../../types/navigation';
 import api from '../../services/api';
+import { colors } from '../../theme/colors';
 
 type Nav = NativeStackNavigationProp<PerfilStackParamList>;
+type FeatherName = React.ComponentProps<typeof Feather>['name'];
 
 const PLAN_LABELS: Record<string, { label: string; cor: string; desc: string }> = {
-  gratuito:       { label: 'Gratuito',       cor: '#757575', desc: '1 veículo · Gastos básicos · Relatórios 6 meses' },
-  premium_mensal: { label: 'Premium Mensal', cor: '#1B5E20', desc: 'Veículos ilimitados · Todos os relatórios · Suporte prioritário' },
-  premium_anual:  { label: 'Premium Anual',  cor: '#1565C0', desc: 'Veículos ilimitados · Todos os relatórios · 2 meses grátis' },
+  gratuito:       { label: 'Gratuito',       cor: colors.textTertiary, desc: '1 veículo · Gastos básicos · Relatórios 6 meses' },
+  premium_mensal: { label: 'Premium Mensal', cor: colors.accent,       desc: 'Veículos ilimitados · Todos os relatórios · Suporte prioritário' },
+  premium_anual:  { label: 'Premium Anual',  cor: colors.success,      desc: 'Veículos ilimitados · Todos os relatórios · 2 meses grátis' },
 };
 
 function Row({
   icon, label, value, onPress, danger = false,
-}: { icon: string; label: string; value?: string; onPress?: () => void; danger?: boolean }) {
+}: { icon: FeatherName; label: string; value?: string; onPress?: () => void; danger?: boolean }) {
   return (
     <TouchableOpacity style={styles.row} onPress={onPress} disabled={!onPress}>
-      <Text style={styles.rowIcon}>{icon}</Text>
+      <View style={styles.rowIconWrap}>
+        <Feather name={icon} size={17} color={danger ? colors.danger : colors.textMuted} />
+      </View>
       <View style={{ flex: 1 }}>
-        <Text style={[styles.rowLabel, danger && { color: '#E53935' }]}>{label}</Text>
+        <Text style={[styles.rowLabel, danger && { color: colors.danger }]}>{label}</Text>
         {value ? <Text style={styles.rowValue} numberOfLines={1}>{value}</Text> : null}
       </View>
-      {onPress && <Text style={styles.rowArrow}>›</Text>}
+      {onPress && <Feather name="chevron-right" size={16} color={colors.textTertiary} />}
     </TouchableOpacity>
   );
 }
@@ -83,7 +88,7 @@ export function PerfilScreen() {
         {/* Badge do plano */}
         <View style={[styles.planBadge, { borderColor: planInfo.cor }]}>
           <Text style={[styles.planBadgeText, { color: planInfo.cor }]}>
-            ✦ {planInfo.label}
+            {planInfo.label}
           </Text>
         </View>
       </View>
@@ -91,9 +96,9 @@ export function PerfilScreen() {
       {/* Seção: Conta */}
       <Text style={styles.section}>Conta</Text>
       <View style={styles.card}>
-        <Row icon="✏️" label="Editar nome" value={user?.name} onPress={() => navigation.navigate('EditarNome')} />
+        <Row icon="user" label="Editar nome" value={user?.name} onPress={() => navigation.navigate('EditarNome')} />
         <View style={styles.divider} />
-        <Row icon="🔑" label="Alterar senha" onPress={() => navigation.navigate('AlterarSenha')} />
+        <Row icon="lock" label="Alterar senha" onPress={() => navigation.navigate('AlterarSenha')} />
       </View>
 
       {/* Seção: Plano */}
@@ -107,12 +112,14 @@ export function PerfilScreen() {
               style={styles.upgradeBtn}
               onPress={() => navigation.navigate('Planos')}
             >
-              <Text style={styles.upgradeBtnText}>🚀 Fazer upgrade para Premium</Text>
+              <Feather name="zap" size={15} color={colors.white} />
+              <Text style={styles.upgradeBtnText}>Fazer upgrade para Premium</Text>
             </TouchableOpacity>
           )}
           {plano !== 'gratuito' && (
             <View style={styles.premiumActive}>
-              <Text style={styles.premiumActiveText}>✅ Plano ativo</Text>
+              <Feather name="check-circle" size={15} color={colors.success} />
+              <Text style={styles.premiumActiveText}>Plano ativo</Text>
             </View>
           )}
         </View>
@@ -122,14 +129,16 @@ export function PerfilScreen() {
       <Text style={styles.section}>Preferências</Text>
       <View style={styles.card}>
         <View style={styles.row}>
-          <Text style={styles.rowIcon}>🔔</Text>
+          <View style={styles.rowIconWrap}>
+            <Feather name="bell" size={17} color={colors.textMuted} />
+          </View>
           <Text style={[styles.rowLabel, { flex: 1 }]}>Notificações</Text>
           <Switch
             value={notifEnabled}
             onValueChange={handleToggleNotifications}
             disabled={savingNotif}
-            trackColor={{ false: '#E0E0E0', true: '#A5D6A7' }}
-            thumbColor="#1B5E20"
+            trackColor={{ false: colors.border, true: colors.accent }}
+            thumbColor={colors.white}
           />
         </View>
       </View>
@@ -137,7 +146,7 @@ export function PerfilScreen() {
       {/* Seção: Conta — ações perigosas */}
       <Text style={styles.section}>Sessão</Text>
       <View style={styles.card}>
-        <Row icon="🚪" label="Sair da conta" onPress={handleLogout} danger />
+        <Row icon="log-out" label="Sair da conta" onPress={handleLogout} danger />
       </View>
 
       <View style={{ height: 40 }} />
@@ -146,30 +155,38 @@ export function PerfilScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
-  header: { backgroundColor: '#1B5E20', alignItems: 'center', paddingTop: 60, paddingBottom: 32, paddingHorizontal: 24 },
+  container: { flex: 1, backgroundColor: colors.bg },
+  header: { alignItems: 'center', paddingTop: 36, paddingBottom: 28, paddingHorizontal: 24 },
   avatar: {
-    width: 80, height: 80, borderRadius: 40, backgroundColor: '#FFF',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
+    width: 80, height: 80, borderRadius: 40, backgroundColor: colors.accent,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 14,
   },
-  avatarText: { fontSize: 36, fontWeight: 'bold', color: '#1B5E20' },
-  userName: { fontSize: 22, fontWeight: 'bold', color: '#FFF', marginBottom: 4 },
-  userEmail: { fontSize: 14, color: '#A5D6A7', marginBottom: 12 },
-  planBadge: { borderWidth: 1.5, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 4, backgroundColor: '#FFF' },
-  planBadgeText: { fontSize: 13, fontWeight: '700' },
-  section: { fontSize: 12, fontWeight: '700', color: '#9E9E9E', marginTop: 24, marginBottom: 8, marginHorizontal: 16, textTransform: 'uppercase', letterSpacing: 0.8 },
-  card: { backgroundColor: '#FFF', borderRadius: 12, marginHorizontal: 16, overflow: 'hidden', elevation: 1 },
-  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14 },
-  rowIcon: { fontSize: 20, marginRight: 12 },
-  rowLabel: { fontSize: 15, color: '#212121', fontWeight: '500' },
-  rowValue: { fontSize: 13, color: '#9E9E9E', marginTop: 2 },
-  rowArrow: { fontSize: 20, color: '#BDBDBD' },
-  divider: { height: 1, backgroundColor: '#F5F5F5', marginLeft: 48 },
+  avatarText: { fontSize: 32, fontWeight: '700', color: colors.white },
+  userName: { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
+  userEmail: { fontSize: 13.5, color: colors.textSecondary, marginBottom: 14 },
+  planBadge: { borderWidth: 1.5, borderRadius: 100, paddingHorizontal: 14, paddingVertical: 5, backgroundColor: colors.surface },
+  planBadgeText: { fontSize: 12.5, fontWeight: '700' },
+  section: { fontSize: 11.5, fontWeight: '700', color: colors.textTertiary, marginTop: 24, marginBottom: 8, marginHorizontal: 16, textTransform: 'uppercase', letterSpacing: 0.8 },
+  card: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, marginHorizontal: 16, overflow: 'hidden' },
+  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, gap: 12 },
+  rowIconWrap: {
+    width: 34, height: 34, borderRadius: 11, backgroundColor: colors.surfaceAlt,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  rowLabel: { fontSize: 14.5, color: colors.textPrimary, fontWeight: '500' },
+  rowValue: { fontSize: 12.5, color: colors.textTertiary, marginTop: 2 },
+  divider: { height: 1, backgroundColor: colors.divider, marginLeft: 62 },
   planCard: { padding: 16 },
-  planTitle: { fontSize: 17, fontWeight: 'bold', color: '#1B5E20', marginBottom: 6 },
-  planDesc: { fontSize: 13, color: '#757575', lineHeight: 20, marginBottom: 14 },
-  upgradeBtn: { backgroundColor: '#1B5E20', borderRadius: 8, paddingVertical: 12, alignItems: 'center' },
-  upgradeBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
-  premiumActive: { backgroundColor: '#E8F5E9', borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
-  premiumActiveText: { color: '#1B5E20', fontSize: 14, fontWeight: '600' },
+  planTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
+  planDesc: { fontSize: 12.5, color: colors.textSecondary, lineHeight: 19, marginBottom: 14 },
+  upgradeBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 13,
+  },
+  upgradeBtnText: { color: colors.white, fontSize: 14.5, fontWeight: '700' },
+  premiumActive: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: colors.successSoftBg, borderRadius: 12, paddingVertical: 11,
+  },
+  premiumActiveText: { color: colors.success, fontSize: 13.5, fontWeight: '600' },
 });

@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
+  View, Text, TouchableOpacity, StyleSheet,
+  ScrollView, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import Feather from 'react-native-vector-icons/Feather';
 import { useVehicleStore } from '../../store/vehicleStore';
 import { VehicleType, VEHICLE_LABELS, VEHICLE_ICONS } from '../../types/vehicle';
+import { FormField } from '../../components/FormField';
+import { PrimaryButton } from '../../components/PrimaryButton';
+import { colors } from '../../theme/colors';
 
 const VEHICLE_TYPES: VehicleType[] = ['carro', 'moto', 'caminhao', 'van'];
 
@@ -44,14 +48,14 @@ export function VehicleRegisterScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>← Voltar</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} hitSlop={8}>
+          <Feather name="chevron-left" size={17} color={colors.textSecondary} />
+          <Text style={styles.backText}>Voltar</Text>
         </TouchableOpacity>
 
         <Text style={styles.title}>Cadastrar veículo</Text>
         <Text style={styles.subtitle}>Escolha o tipo e preencha os dados</Text>
 
-        {/* 4 Cards de tipo */}
         <Text style={styles.label}>Tipo do veículo</Text>
         <View style={styles.typeGrid}>
           {VEHICLE_TYPES.map((t) => (
@@ -68,72 +72,19 @@ export function VehicleRegisterScreen() {
           ))}
         </View>
 
-        {/* Campos de texto */}
         <View style={styles.form}>
-          <Text style={styles.label}>Marca <Text style={styles.required}>*</Text></Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ex: Toyota, Honda, Fiat..."
-            placeholderTextColor="#9E9E9E"
-            value={marca}
-            onChangeText={setMarca}
-            autoCapitalize="words"
-          />
+          <FormField label="Marca" required placeholder="Ex: Toyota, Honda, Fiat..." autoCapitalize="words" value={marca} onChangeText={setMarca} />
+          <FormField label="Modelo" required placeholder="Ex: Corolla, Civic, Argo..." autoCapitalize="words" value={modelo} onChangeText={setModelo} />
+          <FormField label="Ano" optional placeholder="Ex: 2020" keyboardType="numeric" maxLength={4} value={ano} onChangeText={setAno} />
+          <FormField label="Cor" optional placeholder="Ex: Prata, Preto, Branco..." autoCapitalize="words" value={cor} onChangeText={setCor} />
+          <FormField label="Apelido" optional placeholder="Ex: Meu Carrão, Motinha..." value={apelido} onChangeText={setApelido} />
 
-          <Text style={styles.label}>Modelo <Text style={styles.required}>*</Text></Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ex: Corolla, Civic, Argo..."
-            placeholderTextColor="#9E9E9E"
-            value={modelo}
-            onChangeText={setModelo}
-            autoCapitalize="words"
-          />
+          <View style={styles.hintRow}>
+            <Feather name="lock" size={13} color={colors.textTertiary} />
+            <Text style={styles.hint}>Placa e RENAVAM são cadastrados ao assinar o plano Premium</Text>
+          </View>
 
-          <Text style={styles.label}>Ano <Text style={styles.optional}>(opcional)</Text></Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ex: 2020"
-            placeholderTextColor="#9E9E9E"
-            value={ano}
-            onChangeText={setAno}
-            keyboardType="numeric"
-            maxLength={4}
-          />
-
-          <Text style={styles.label}>Cor <Text style={styles.optional}>(opcional)</Text></Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ex: Prata, Preto, Branco..."
-            placeholderTextColor="#9E9E9E"
-            value={cor}
-            onChangeText={setCor}
-            autoCapitalize="words"
-          />
-
-          <Text style={styles.label}>Apelido <Text style={styles.optional}>(opcional)</Text></Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ex: Meu Carrão, Motinha..."
-            placeholderTextColor="#9E9E9E"
-            value={apelido}
-            onChangeText={setApelido}
-          />
-
-          <Text style={styles.hint}>
-            🔒 Placa e RENAVAM são cadastrados ao assinar o plano Premium
-          </Text>
-
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleSubmit}
-            disabled={isLoading}
-          >
-            {isLoading
-              ? <ActivityIndicator color="#FFF" />
-              : <Text style={styles.buttonText}>Salvar veículo</Text>
-            }
-          </TouchableOpacity>
+          <PrimaryButton label="Salvar veículo" onPress={handleSubmit} loading={isLoading} />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -141,36 +92,24 @@ export function VehicleRegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: '#F5F5F5', paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40 },
-  backBtn: { marginBottom: 16 },
-  backText: { color: '#1B5E20', fontSize: 16 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#1B5E20', marginBottom: 6 },
-  subtitle: { fontSize: 15, color: '#616161', marginBottom: 24 },
+  container: { flexGrow: 1, backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: 30, paddingBottom: 40, gap: 6 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 10 },
+  backText: { fontSize: 14, color: colors.textSecondary },
+  title: { fontSize: 21, fontWeight: '700', color: colors.textPrimary },
+  subtitle: { fontSize: 13, color: colors.textSecondary, marginBottom: 18 },
 
-  typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
+  label: { fontSize: 12.5, fontWeight: '600', color: colors.textMuted, marginBottom: 10 },
+  typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 18 },
   typeCard: {
-    width: '47%', backgroundColor: '#FFF', borderRadius: 12,
-    padding: 20, alignItems: 'center', borderWidth: 2, borderColor: '#E0E0E0',
-    elevation: 1,
+    width: '47%', backgroundColor: colors.surface, borderRadius: 14,
+    padding: 16, alignItems: 'center', borderWidth: 1.5, borderColor: colors.border,
   },
-  typeCardSelected: { borderColor: '#1B5E20', backgroundColor: '#E8F5E9' },
-  typeIcon: { fontSize: 36, marginBottom: 8 },
-  typeLabel: { fontSize: 14, fontWeight: '600', color: '#424242' },
-  typeLabelSelected: { color: '#1B5E20' },
+  typeCardSelected: { borderColor: colors.accent, backgroundColor: colors.accentSoftBg },
+  typeIcon: { fontSize: 28, marginBottom: 8 },
+  typeLabel: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
+  typeLabelSelected: { color: colors.accent },
 
-  form: { backgroundColor: '#FFF', borderRadius: 12, padding: 20, elevation: 2 },
-  label: { fontSize: 14, fontWeight: '600', color: '#424242', marginBottom: 6, marginTop: 14 },
-  required: { color: '#E53935' },
-  optional: { fontWeight: '400', color: '#9E9E9E', fontSize: 12 },
-  input: {
-    borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8,
-    paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: '#212121', backgroundColor: '#FAFAFA',
-  },
-  hint: { fontSize: 12, color: '#9E9E9E', marginTop: 16, textAlign: 'center', lineHeight: 18 },
-  button: {
-    backgroundColor: '#1B5E20', borderRadius: 8,
-    paddingVertical: 16, alignItems: 'center', marginTop: 24,
-  },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  form: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 18, padding: 18, gap: 12 },
+  hintRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingHorizontal: 2 },
+  hint: { flex: 1, fontSize: 11.5, color: colors.textTertiary, lineHeight: 15 },
 });

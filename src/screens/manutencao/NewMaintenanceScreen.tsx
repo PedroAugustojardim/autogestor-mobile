@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Switch,
+  View, Text, TouchableOpacity, StyleSheet,
+  ScrollView, Alert, KeyboardAvoidingView, Platform, Switch,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import Feather from 'react-native-vector-icons/Feather';
 import { useMaintenanceStore } from '../../store/maintenanceStore';
 import { useVehicleStore } from '../../store/vehicleStore';
 import { MAINTENANCE_TYPES } from '../../types/maintenance';
 import { HomeStackParamList } from '../../types/navigation';
 import { todayLocalISO } from '../../utils/date';
+import { FormField } from '../../components/FormField';
+import { PrimaryButton } from '../../components/PrimaryButton';
+import { SelectableChip } from '../../components/SelectableChip';
+import { colors } from '../../theme/colors';
 
 type RouteProps = RouteProp<HomeStackParamList, 'NewMaintenance'>;
 
@@ -57,60 +62,39 @@ export function NewMaintenanceScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>← Voltar</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} hitSlop={8}>
+          <Feather name="chevron-left" size={17} color={colors.textSecondary} />
+          <Text style={styles.backText}>Voltar</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Nova manutenção</Text>
 
         <Text style={styles.label}>Tipo *</Text>
         <View style={styles.chipWrap}>
           {tipos.map((t) => (
-            <TouchableOpacity
-              key={t}
-              style={[styles.chip, tipo === t && styles.chipSel]}
-              onPress={() => setTipo(t)}
-            >
-              <Text style={[styles.chipText, tipo === t && styles.chipTextSel]}>{t}</Text>
-            </TouchableOpacity>
+            <SelectableChip key={t} label={t} selected={tipo === t} onPress={() => setTipo(t)} />
           ))}
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Data *</Text>
-          <TextInput style={styles.input} value={data} onChangeText={setData}
-            placeholder="AAAA-MM-DD" placeholderTextColor="#9E9E9E" />
-
-          <Text style={styles.label}>KM atual <Text style={styles.optional}>(opcional)</Text></Text>
-          <TextInput style={styles.input} value={km} onChangeText={setKm}
-            keyboardType="number-pad" placeholder="Ex: 52000" placeholderTextColor="#9E9E9E" />
-
-          <Text style={styles.label}>Custo (R$) <Text style={styles.optional}>(opcional)</Text></Text>
-          <TextInput style={styles.input} value={custo} onChangeText={setCusto}
-            keyboardType="decimal-pad" placeholder="0,00" placeholderTextColor="#9E9E9E" />
-
-          <Text style={styles.label}>Observação <Text style={styles.optional}>(opcional)</Text></Text>
-          <TextInput style={[styles.input, { height: 80 }]} value={descricao} onChangeText={setDescricao}
-            multiline placeholder="Ex: Oficina do João" placeholderTextColor="#9E9E9E" textAlignVertical="top" />
+          <FormField label="Data" required placeholder="AAAA-MM-DD" value={data} onChangeText={setData} />
+          <FormField label="KM atual" optional placeholder="Ex: 52000" keyboardType="number-pad" value={km} onChangeText={setKm} />
+          <FormField label="Custo (R$)" optional placeholder="0,00" keyboardType="decimal-pad" value={custo} onChangeText={setCusto} />
+          <FormField label="Observação" optional placeholder="Ex: Oficina do João" multiline style={{ height: 80 }} textAlignVertical="top" value={descricao} onChangeText={setDescricao} />
 
           <View style={styles.switchRow}>
             <Text style={styles.switchLabel}>Criar lembrete para o próximo?</Text>
-            <Switch value={criarLembrete} onValueChange={setCriarLembrete}
-              trackColor={{ true: '#1B5E20' }} />
+            <Switch
+              value={criarLembrete}
+              onValueChange={setCriarLembrete}
+              trackColor={{ false: colors.border, true: colors.accent }}
+              thumbColor={colors.white}
+            />
           </View>
           {criarLembrete && (
-            <>
-              <Text style={styles.label}>Data prevista do próximo *</Text>
-              <TextInput style={styles.input} value={dataLembrete} onChangeText={setDataLembrete}
-                placeholder="AAAA-MM-DD" placeholderTextColor="#9E9E9E" />
-            </>
+            <FormField label="Data prevista do próximo" required placeholder="AAAA-MM-DD" value={dataLembrete} onChangeText={setDataLembrete} />
           )}
 
-          <TouchableOpacity
-            style={[styles.btn, isLoading && styles.btnDisabled]}
-            onPress={handleSubmit} disabled={isLoading}
-          >
-            {isLoading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>Salvar manutenção</Text>}
-          </TouchableOpacity>
+          <PrimaryButton label="Salvar manutenção" onPress={handleSubmit} loading={isLoading} />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -118,31 +102,13 @@ export function NewMaintenanceScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: '#F5F5F5', paddingHorizontal: 16, paddingTop: 56, paddingBottom: 40 },
-  backBtn: { marginBottom: 12 },
-  backText: { color: '#1B5E20', fontSize: 16 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#1B5E20', marginBottom: 20 },
-  label: { fontSize: 13, fontWeight: '600', color: '#424242', marginBottom: 6, marginTop: 12 },
-  optional: { fontWeight: '400', color: '#9E9E9E', fontSize: 11 },
+  container: { flexGrow: 1, backgroundColor: colors.bg, paddingHorizontal: 16, paddingTop: 30, paddingBottom: 40, gap: 6 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 10 },
+  backText: { fontSize: 14, color: colors.textSecondary },
+  title: { fontSize: 21, fontWeight: '700', color: colors.textPrimary, marginBottom: 16 },
+  label: { fontSize: 12.5, fontWeight: '600', color: colors.textMuted, marginBottom: 10 },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16,
-    backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E0E0E0',
-  },
-  chipSel: { backgroundColor: '#1B5E20', borderColor: '#1B5E20' },
-  chipText: { fontSize: 13, color: '#424242' },
-  chipTextSel: { color: '#FFF', fontWeight: '600' },
-  form: { backgroundColor: '#FFF', borderRadius: 12, padding: 16, marginTop: 16, elevation: 1 },
-  input: {
-    borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8,
-    paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, color: '#212121', backgroundColor: '#FAFAFA',
-  },
-  switchRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginTop: 16,
-  },
-  switchLabel: { fontSize: 14, color: '#424242', fontWeight: '600', flex: 1 },
-  btn: { backgroundColor: '#1B5E20', borderRadius: 8, paddingVertical: 14, alignItems: 'center', marginTop: 20 },
-  btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  form: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 16, marginTop: 16, gap: 12 },
+  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  switchLabel: { fontSize: 13.5, color: colors.textPrimary, fontWeight: '500', flex: 1 },
 });

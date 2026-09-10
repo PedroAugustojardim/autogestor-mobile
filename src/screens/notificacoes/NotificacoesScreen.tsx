@@ -3,20 +3,25 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import Feather from 'react-native-vector-icons/Feather';
 import { useNotificationStore } from '../../store/notificationStore';
 import { Notification } from '../../types/notification';
 import { formatDateTimeBR as formatDateTime } from '../../utils/date';
+import { BackHeader } from '../../components/BackHeader';
+import { PrimaryButton } from '../../components/PrimaryButton';
+import { colors } from '../../theme/colors';
 
-const ICONS: Record<string, string> = {
-  lembrete: '🔧',
+const ICONS: Record<string, React.ComponentProps<typeof Feather>['name']> = {
+  lembrete: 'tool',
 };
 
 function NotificationCard({ item, onPress }: { item: Notification; onPress: () => void }) {
   return (
     <TouchableOpacity style={[styles.card, !item.lida && styles.cardUnread]} onPress={onPress}>
       {!item.lida && <View style={styles.dot} />}
-      <Text style={styles.cardIcon}>{ICONS[item.tipo] ?? '🔔'}</Text>
+      <View style={styles.cardIconWrap}>
+        <Feather name={ICONS[item.tipo] ?? 'bell'} size={17} color={colors.textMuted} />
+      </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.cardTitulo}>{item.titulo}</Text>
         <Text style={styles.cardMensagem}>{item.mensagem}</Text>
@@ -27,7 +32,6 @@ function NotificationCard({ item, onPress }: { item: Notification; onPress: () =
 }
 
 export function NotificacoesScreen() {
-  const navigation = useNavigation();
   const {
     notifications, unreadCount, isLoading,
     fetchNotifications, markRead, markAllRead,
@@ -52,26 +56,19 @@ export function NotificacoesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>← Voltar</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Notificações</Text>
-        {unreadCount > 0 ? (
-          <TouchableOpacity onPress={handleMarkAllRead}>
-            <Text style={styles.markAllText}>Marcar todas</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: 70 }} />
-        )}
+      <View style={styles.headerPad}>
+        <BackHeader
+          title="Notificações"
+          right={unreadCount > 0 ? <PrimaryButton label="Marcar todas" variant="ghost" onPress={handleMarkAllRead} /> : undefined}
+        />
       </View>
 
       {isLoading && notifications.length === 0 ? (
-        <ActivityIndicator color="#1B5E20" style={{ marginTop: 32 }} />
+        <ActivityIndicator color={colors.accent} style={{ marginTop: 32 }} />
       ) : (
         <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1B5E20" />}
+          contentContainerStyle={{ padding: 16, paddingBottom: 40, gap: 10 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
         >
           {notifications.length > 0 ? (
             notifications.map((n) => (
@@ -79,7 +76,7 @@ export function NotificacoesScreen() {
             ))
           ) : (
             <View style={styles.empty}>
-              <Text style={styles.emptyIcon}>🔔</Text>
+              <Feather name="bell" size={40} color={colors.textTertiary} />
               <Text style={styles.emptyText}>Nenhuma notificação por aqui</Text>
             </View>
           )}
@@ -90,28 +87,21 @@ export function NotificacoesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
-  header: {
-    backgroundColor: '#1B5E20', padding: 24, paddingTop: 56,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-  },
-  backText: { color: '#A5D6A7', fontSize: 15, width: 70 },
-  title: { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
-  markAllText: { color: '#A5D6A7', fontSize: 13, fontWeight: '600', width: 70, textAlign: 'right' },
+  container: { flex: 1, backgroundColor: colors.bg },
+  headerPad: { paddingHorizontal: 20, paddingTop: 24 },
   card: {
-    backgroundColor: '#FFF', borderRadius: 10, padding: 14, marginBottom: 8,
-    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+    position: 'relative', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+    borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'flex-start', gap: 12,
   },
-  cardUnread: { backgroundColor: '#F1F8E9' },
+  cardUnread: { borderColor: colors.accent },
   dot: {
     position: 'absolute', top: 14, right: 14,
-    width: 8, height: 8, borderRadius: 4, backgroundColor: '#1B5E20',
+    width: 7, height: 7, borderRadius: 4, backgroundColor: colors.accent,
   },
-  cardIcon: { fontSize: 22 },
-  cardTitulo: { fontSize: 14, fontWeight: '700', color: '#212121' },
-  cardMensagem: { fontSize: 13, color: '#616161', marginTop: 2, lineHeight: 18 },
-  cardData: { fontSize: 11, color: '#9E9E9E', marginTop: 6 },
-  empty: { alignItems: 'center', marginTop: 64 },
-  emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyText: { color: '#9E9E9E', fontSize: 15 },
+  cardIconWrap: { width: 36, height: 36, borderRadius: 11, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
+  cardTitulo: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  cardMensagem: { fontSize: 12.5, color: colors.textSecondary, marginTop: 2, lineHeight: 18 },
+  cardData: { fontSize: 11, color: colors.textTertiary, marginTop: 6 },
+  empty: { alignItems: 'center', marginTop: 64, gap: 12 },
+  emptyText: { color: colors.textTertiary, fontSize: 14 },
 });

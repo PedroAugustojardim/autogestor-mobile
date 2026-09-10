@@ -32,10 +32,21 @@ interface MaintenanceState {
   clear: () => void;
 }
 
+// TEMP DEV BYPASS — mesmo veículo/exemplo do scratchpad_previsao_manutencao.html.
+// Reverter com `git checkout -- src/store/maintenanceStore.ts` antes de commitar qualquer coisa.
+const FIXTURE_MAINTENANCES: Maintenance[] = [
+  { id: 1, vehicleId: 1, tipo: 'Troca de pneu', data: '2026-07-01', km: 40200, custo: '80.00', descricao: 'Rodízio de pneus', createdAt: '2026-07-01T09:00:00.000Z' },
+  { id: 2, vehicleId: 1, tipo: 'Troca de óleo', data: '2026-02-20', km: 34900, custo: '220.00', descricao: 'Óleo sintético 5W30 + filtro', createdAt: '2026-02-20T09:00:00.000Z' },
+];
+const FIXTURE_REMINDERS: Reminder[] = [
+  { id: 1, vehicleId: 1, maintenanceId: 2, tipo: 'Troca de óleo', dataPrevista: '2026-08-20', silenciado: false, concluido: false, createdAt: '2026-02-20T09:00:00.000Z' },
+  { id: 2, vehicleId: 1, maintenanceId: 1, tipo: 'Troca de pneu', dataPrevista: '2026-11-22', silenciado: false, concluido: false, createdAt: '2026-07-01T09:00:00.000Z' },
+];
+
 export const useMaintenanceStore = create<MaintenanceState>((set, get) => ({
-  maintenances: [],
-  reminders: [],
-  nextReminder: null,
+  maintenances: FIXTURE_MAINTENANCES,
+  reminders: FIXTURE_REMINDERS,
+  nextReminder: FIXTURE_REMINDERS[0],
   isLoading: false,
   error: null,
 

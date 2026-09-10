@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
+  View, Text, TouchableOpacity, StyleSheet,
+  Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import Feather from 'react-native-vector-icons/Feather';
 import { useAuthStore } from '../../store/authStore';
 import api from '../../services/api';
+import { FormField } from '../../components/FormField';
+import { PrimaryButton } from '../../components/PrimaryButton';
+import { colors } from '../../theme/colors';
 
 export function EditarNomeScreen() {
   const navigation = useNavigation();
@@ -33,48 +37,25 @@ export function EditarNomeScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.container}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>← Voltar</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} hitSlop={8}>
+          <Feather name="chevron-left" size={17} color={colors.textSecondary} />
+          <Text style={styles.backText}>Voltar</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Editar nome</Text>
 
-        <Text style={styles.label}>Nome completo</Text>
-        <TextInput
-          style={styles.input}
-          value={nome}
-          onChangeText={setNome}
-          placeholder="Seu nome"
-          placeholderTextColor="#9E9E9E"
-          autoFocus
-          maxLength={100}
-        />
-
-        <TouchableOpacity
-          style={[styles.btn, loading && styles.btnDisabled]}
-          onPress={handleSave}
-          disabled={loading}
-        >
-          {loading
-            ? <ActivityIndicator color="#FFF" />
-            : <Text style={styles.btnText}>Salvar</Text>}
-        </TouchableOpacity>
+        <View style={styles.form}>
+          <FormField label="Nome completo" placeholder="Seu nome" autoFocus maxLength={100} value={nome} onChangeText={setNome} />
+          <PrimaryButton label="Salvar" onPress={handleSave} loading={loading} />
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5', padding: 24, paddingTop: 56 },
-  backBtn: { marginBottom: 20 },
-  backText: { color: '#1B5E20', fontSize: 16 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#1B5E20', marginBottom: 32 },
-  label: { fontSize: 13, fontWeight: '600', color: '#424242', marginBottom: 8 },
-  input: {
-    backgroundColor: '#FFF', borderWidth: 1, borderColor: '#E0E0E0',
-    borderRadius: 8, paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 16, color: '#212121', marginBottom: 24,
-  },
-  btn: { backgroundColor: '#1B5E20', borderRadius: 8, paddingVertical: 14, alignItems: 'center' },
-  btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  container: { flex: 1, backgroundColor: colors.bg, padding: 20, paddingTop: 30, gap: 6 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 12 },
+  backText: { fontSize: 14, color: colors.textSecondary },
+  title: { fontSize: 21, fontWeight: '700', color: colors.textPrimary, marginBottom: 20 },
+  form: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 18, padding: 18, gap: 14 },
 });

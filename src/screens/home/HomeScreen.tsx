@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Feather from 'react-native-vector-icons/Feather';
 import { useVehicleStore } from '../../store/vehicleStore';
 import { useAuthStore } from '../../store/authStore';
 import { useExpenseStore } from '../../store/expenseStore';
@@ -13,6 +14,7 @@ import { useNotificationStore } from '../../store/notificationStore';
 import { VEHICLE_ICONS, VEHICLE_LABELS } from '../../types/vehicle';
 import { HomeStackParamList } from '../../types/navigation';
 import { formatDateBR as formatReminderDate } from '../../utils/date';
+import { colors } from '../../theme/colors';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -46,7 +48,7 @@ export function HomeScreen() {
   if (isLoading && vehicles.length === 0) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1B5E20" />
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
@@ -86,23 +88,21 @@ export function HomeScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />}
+      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor={colors.accent} />}
     >
-      <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.greeting}>Olá, {user?.name?.split(' ')[0]} 👋</Text>
-            <Text style={styles.headerSub}>Acompanhe seus gastos</Text>
-          </View>
-          <TouchableOpacity style={styles.bellBtn} onPress={() => navigation.navigate('Notificacoes')}>
-            <Text style={styles.bellIcon}>🔔</Text>
-            {unreadCount > 0 && (
-              <View style={styles.bellBadge}>
-                <Text style={styles.bellBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+      <View style={styles.topRow}>
+        <View>
+          <Text style={styles.greeting}>Olá, {user?.name?.split(' ')[0]} 👋</Text>
+          <Text style={styles.headerSub}>Acompanhe seus gastos</Text>
         </View>
+        <TouchableOpacity style={styles.bellBtn} onPress={() => navigation.navigate('Notificacoes')}>
+          <Feather name="bell" size={18} color={colors.textMuted} />
+          {unreadCount > 0 && (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* Card do veículo */}
@@ -149,16 +149,19 @@ export function HomeScreen() {
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionTitle}>Próximos lembretes</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Manutencao')}>
-            <Text style={styles.sectionLink}>Ver tudo →</Text>
+            <Text style={styles.sectionLink}>Ver tudo</Text>
           </TouchableOpacity>
         </View>
         {nextReminder ? (
           <TouchableOpacity style={styles.reminderCard} onPress={() => navigation.navigate('Manutencao')}>
-            <Text style={styles.reminderIcon}>🔧</Text>
+            <View style={styles.reminderIconWrap}>
+              <Feather name="tool" size={16} color={colors.accent} />
+            </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.reminderTipo}>{nextReminder.tipo}</Text>
               <Text style={styles.reminderData}>Previsto para {formatReminderDate(nextReminder.dataPrevista)}</Text>
             </View>
+            <Feather name="chevron-right" size={16} color={colors.textTertiary} />
           </TouchableOpacity>
         ) : (
           <View style={styles.emptySection}>
@@ -174,108 +177,120 @@ export function HomeScreen() {
       {user?.plano !== 'gratuito' && (
         <View style={styles.section}>
           <TouchableOpacity style={styles.consultaCard} onPress={() => navigation.navigate('Consultas')}>
-            <Text style={styles.consultaIcon}>🚨</Text>
+            <View style={styles.consultaIconWrap}>
+              <Feather name="alert-triangle" size={17} color={colors.warning} />
+            </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.consultaTitle}>Consultas SP</Text>
               <Text style={styles.consultaSubtitle}>Multas, IPVA, licenciamento e recall</Text>
             </View>
-            <Text style={styles.consultaArrow}>›</Text>
+            <Feather name="chevron-right" size={17} color={colors.textTertiary} />
           </TouchableOpacity>
         </View>
       )}
+
+      <View style={{ height: 24 }} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  errorText: { fontSize: 15, color: '#E53935', textAlign: 'center', marginBottom: 16 },
-  retryBtn: { backgroundColor: '#1B5E20', borderRadius: 8, paddingVertical: 12, paddingHorizontal: 24 },
-  retryText: { color: '#FFF', fontWeight: '600' },
+  container: { flex: 1, backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.bg },
+  errorText: { fontSize: 15, color: colors.danger, textAlign: 'center', marginBottom: 16 },
+  retryBtn: { backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 12, paddingHorizontal: 24 },
+  retryText: { color: colors.white, fontWeight: '600' },
 
   // Empty state
   emptyContainer: {
-    flex: 1, backgroundColor: '#F5F5F5',
+    flex: 1, backgroundColor: colors.bg,
     alignItems: 'center', justifyContent: 'center', padding: 32,
   },
-  emptyIcon: { fontSize: 72, marginBottom: 20 },
-  emptyTitle: { fontSize: 24, fontWeight: 'bold', color: '#1B5E20', marginBottom: 12 },
+  emptyIcon: { fontSize: 64, marginBottom: 20 },
+  emptyTitle: { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 },
   emptySubtitle: {
-    fontSize: 15, color: '#616161', textAlign: 'center',
+    fontSize: 15, color: colors.textSecondary, textAlign: 'center',
     lineHeight: 22, marginBottom: 32,
   },
   addButton: {
-    backgroundColor: '#1B5E20', borderRadius: 10,
+    backgroundColor: colors.accent, borderRadius: 14,
     paddingVertical: 16, paddingHorizontal: 32,
   },
-  addButtonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  addButtonText: { color: colors.white, fontSize: 16, fontWeight: '700' },
 
   // Header
-  header: { backgroundColor: '#1B5E20', padding: 24, paddingTop: 48 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  greeting: { fontSize: 22, fontWeight: 'bold', color: '#FFF' },
-  headerSub: { fontSize: 14, color: '#A5D6A7', marginTop: 2 },
-  bellBtn: { padding: 4 },
-  bellIcon: { fontSize: 24 },
-  bellBadge: {
-    position: 'absolute', top: -2, right: -4,
-    backgroundColor: '#E53935', borderRadius: 9, minWidth: 18, height: 18,
-    alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4,
+  topRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
+    paddingHorizontal: 20, paddingTop: 24, paddingBottom: 4,
   },
-  bellBadgeText: { color: '#FFF', fontSize: 10, fontWeight: '700' },
+  greeting: { fontSize: 20, fontWeight: '700', color: colors.textPrimary },
+  headerSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+  bellBtn: {
+    width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface,
+    borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center',
+  },
+  bellBadge: {
+    position: 'absolute', top: -2, right: -2,
+    backgroundColor: colors.danger, borderRadius: 8, minWidth: 16, height: 16,
+    alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3,
+    borderWidth: 1.5, borderColor: colors.bg,
+  },
+  bellBadgeText: { color: colors.white, fontSize: 9, fontWeight: '700' },
 
   // Vehicle card
   vehicleCard: {
-    backgroundColor: '#FFF', margin: 16, borderRadius: 12,
-    padding: 20, elevation: 3,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1, shadowRadius: 4,
+    backgroundColor: colors.accent, marginHorizontal: 16, marginTop: 18, marginBottom: 4,
+    borderRadius: 22, padding: 20,
   },
   vehicleCardTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  vehicleIcon: { fontSize: 36 },
-  vehicleName: { fontSize: 18, fontWeight: 'bold', color: '#212121' },
-  vehicleType: { fontSize: 13, color: '#757575', marginTop: 2 },
+  vehicleIcon: { fontSize: 32 },
+  vehicleName: { fontSize: 17, fontWeight: '700', color: colors.white },
+  vehicleType: { fontSize: 12.5, color: 'rgba(255,255,255,0.78)', marginTop: 2 },
   planBadge: {
-    backgroundColor: '#E8F5E9', borderRadius: 6,
-    paddingHorizontal: 8, paddingVertical: 4,
+    backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 100,
+    paddingHorizontal: 10, paddingVertical: 5,
   },
-  planBadgeText: { fontSize: 12, color: '#1B5E20', fontWeight: '600' },
-  divider: { height: 1, backgroundColor: '#F0F0F0', marginVertical: 16 },
-  monthSummary: { alignItems: 'center', marginBottom: 16 },
-  monthLabel: { fontSize: 13, color: '#757575' },
-  monthValue: { fontSize: 32, fontWeight: 'bold', color: '#1B5E20', marginTop: 4 },
-  monthHint: { fontSize: 12, color: '#BDBDBD', marginTop: 4 },
+  planBadgeText: { fontSize: 11, color: colors.white, fontWeight: '700' },
+  divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.2)', marginVertical: 18 },
+  monthSummary: { alignItems: 'center', marginBottom: 18 },
+  monthLabel: { fontSize: 12.5, color: 'rgba(255,255,255,0.75)' },
+  monthValue: { fontSize: 30, fontWeight: '800', color: colors.white, marginTop: 4 },
+  monthHint: { fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 4 },
   addExpenseBtn: {
-    backgroundColor: '#E8F5E9', borderRadius: 8,
-    paddingVertical: 12, alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: 12,
+    paddingVertical: 13, alignItems: 'center',
   },
-  addExpenseBtnText: { color: '#1B5E20', fontSize: 15, fontWeight: '600' },
+  addExpenseBtnText: { color: colors.white, fontSize: 14.5, fontWeight: '700' },
 
   // Section
-  section: { marginHorizontal: 16, marginBottom: 16 },
-  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#212121' },
-  sectionLink: { fontSize: 13, color: '#1B5E20', fontWeight: '600' },
+  section: { marginHorizontal: 16, marginTop: 22, marginBottom: 4 },
+  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+  sectionLink: { fontSize: 12.5, color: colors.accent, fontWeight: '700' },
   emptySection: {
-    backgroundColor: '#FFF', borderRadius: 10, padding: 20,
-    alignItems: 'center',
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+    borderRadius: 16, padding: 20, alignItems: 'center',
   },
-  emptySectionText: { color: '#BDBDBD', fontSize: 14 },
+  emptySectionText: { color: colors.textTertiary, fontSize: 13.5 },
   reminderCard: {
-    backgroundColor: '#FFF', borderRadius: 10, padding: 14,
-    flexDirection: 'row', alignItems: 'center', gap: 12, elevation: 1,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+    borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12,
   },
-  reminderIcon: { fontSize: 24 },
-  reminderTipo: { fontSize: 14, fontWeight: '700', color: '#212121' },
-  reminderData: { fontSize: 12, color: '#757575', marginTop: 2 },
+  reminderIconWrap: {
+    width: 38, height: 38, borderRadius: 12, backgroundColor: colors.accentSoftBg,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  reminderTipo: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  reminderData: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
 
   consultaCard: {
-    backgroundColor: '#FFF', borderRadius: 10, padding: 16,
-    flexDirection: 'row', alignItems: 'center', gap: 12, elevation: 1,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+    borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12,
   },
-  consultaIcon: { fontSize: 28 },
-  consultaTitle: { fontSize: 15, fontWeight: '700', color: '#212121' },
-  consultaSubtitle: { fontSize: 12, color: '#757575', marginTop: 2 },
-  consultaArrow: { fontSize: 24, color: '#BDBDBD' },
+  consultaIconWrap: {
+    width: 40, height: 40, borderRadius: 13, backgroundColor: colors.warningSoftBg,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  consultaTitle: { fontSize: 14.5, fontWeight: '700', color: colors.textPrimary },
+  consultaSubtitle: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
 });

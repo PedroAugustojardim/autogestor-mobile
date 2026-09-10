@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert, RefreshControl,
+  View, Text, StyleSheet, ScrollView,
+  ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import Feather from 'react-native-vector-icons/Feather';
 import { useVehicleStore } from '../../store/vehicleStore';
 import { useConsultaStore } from '../../store/consultaStore';
 import { formatDateShortBR as formatDate } from '../../utils/date';
 import { formatCurrencyBRL as formatCurrency } from '../../utils/currency';
+import { BackHeader } from '../../components/BackHeader';
+import { FormField } from '../../components/FormField';
+import { PrimaryButton } from '../../components/PrimaryButton';
+import { colors } from '../../theme/colors';
 
 function PlateForm({ vehicleId, onLinked }: { vehicleId: number; onLinked: () => void }) {
   const { linkPlate } = useConsultaStore();
@@ -29,40 +33,23 @@ function PlateForm({ vehicleId, onLinked }: { vehicleId: number; onLinked: () =>
 
   return (
     <View style={styles.plateCard}>
-      <Text style={styles.plateIcon}>🚗</Text>
+      <View style={styles.plateIconWrap}>
+        <Feather name="file-text" size={22} color={colors.accent} />
+      </View>
       <Text style={styles.plateTitle}>Cadastre a placa do veículo</Text>
       <Text style={styles.plateSubtitle}>
         As consultas de multas, IPVA e licenciamento precisam da placa e do RENAVAM cadastrados.
       </Text>
-      <Text style={styles.label}>Placa</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="AAA1A23"
-        placeholderTextColor="#9E9E9E"
-        autoCapitalize="characters"
-        maxLength={7}
-        value={placa}
-        onChangeText={setPlaca}
-      />
-      <Text style={styles.label}>RENAVAM</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="11 dígitos"
-        placeholderTextColor="#9E9E9E"
-        keyboardType="number-pad"
-        maxLength={11}
-        value={renavam}
-        onChangeText={setRenavam}
-      />
-      <TouchableOpacity style={[styles.btn, loading && styles.btnDisabled]} onPress={submit} disabled={loading}>
-        {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.btnText}>Salvar e consultar</Text>}
-      </TouchableOpacity>
+      <View style={{ width: '100%', gap: 12 }}>
+        <FormField label="Placa" placeholder="AAA1A23" autoCapitalize="characters" maxLength={7} value={placa} onChangeText={setPlaca} />
+        <FormField label="RENAVAM" placeholder="11 dígitos" keyboardType="number-pad" maxLength={11} value={renavam} onChangeText={setRenavam} />
+        <PrimaryButton label="Salvar e consultar" onPress={submit} loading={loading} />
+      </View>
     </View>
   );
 }
 
 export function ConsultasScreen() {
-  const navigation = useNavigation();
   const { activeVehicle } = useVehicleStore();
   const {
     fines, ipva, debts, recalls, isLoading, error, needsPlate,
@@ -91,17 +78,14 @@ export function ConsultasScreen() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1B5E20" />}
+      contentContainerStyle={{ paddingBottom: 32 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
     >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>← Voltar</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Consultas SP</Text>
-        <View style={{ width: 60 }} />
+      <View style={styles.headerPad}>
+        <BackHeader title="Consultas SP" />
       </View>
 
-      {isLoading && <ActivityIndicator color="#1B5E20" style={{ marginTop: 32 }} />}
+      {isLoading && <ActivityIndicator color={colors.accent} style={{ marginTop: 32 }} />}
 
       {!isLoading && error && (
         <View style={styles.errorBox}><Text style={styles.errorText}>{error}</Text></View>
@@ -116,7 +100,10 @@ export function ConsultasScreen() {
           {/* Multas */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>🚨 Multas</Text>
+              <View style={styles.sectionIconWrap}>
+                <Feather name="alert-triangle" size={14} color={colors.accent} />
+              </View>
+              <Text style={styles.sectionTitle}>Multas</Text>
               {fines.length > 0 && (
                 <View style={styles.badge}><Text style={styles.badgeText}>{fines.length}</Text></View>
               )}
@@ -129,7 +116,7 @@ export function ConsultasScreen() {
                       <Text style={styles.rowTitle}>{f.descricao}</Text>
                       <Text style={styles.rowSub}>{f.orgao} · {formatDate(f.data)}</Text>
                     </View>
-                    <Text style={styles.rowValue}>{formatCurrency(f.valor)}</Text>
+                    <Text style={styles.rowValueDanger}>{formatCurrency(f.valor)}</Text>
                   </View>
                 ))}
               </View>
@@ -140,7 +127,12 @@ export function ConsultasScreen() {
 
           {/* IPVA */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📄 IPVA {ipva?.ano}</Text>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIconWrap}>
+                <Feather name="file-text" size={14} color={colors.accent} />
+              </View>
+              <Text style={styles.sectionTitle}>IPVA {ipva?.ano}</Text>
+            </View>
             {ipva && (
               <View style={styles.card}>
                 <Text style={styles.ipvaTotal}>Total: {formatCurrency(ipva.valorTotal)}</Text>
@@ -150,7 +142,7 @@ export function ConsultasScreen() {
                     <View style={{ alignItems: 'flex-end' }}>
                       <Text style={styles.rowValue}>{formatCurrency(p.valor)}</Text>
                       <Text style={[styles.rowSub, p.paga ? styles.paga : styles.pendente]}>
-                        {p.paga ? '✅ Paga' : `Vence ${formatDate(p.vencimento)}`}
+                        {p.paga ? 'Paga' : `Vence ${formatDate(p.vencimento)}`}
                       </Text>
                     </View>
                   </View>
@@ -161,7 +153,12 @@ export function ConsultasScreen() {
 
           {/* Licenciamento */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📋 Licenciamento</Text>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIconWrap}>
+                <Feather name="check-circle" size={14} color={colors.accent} />
+              </View>
+              <Text style={styles.sectionTitle}>Licenciamento</Text>
+            </View>
             {debts && (
               <View style={styles.card}>
                 <View style={styles.row}>
@@ -176,7 +173,12 @@ export function ConsultasScreen() {
 
           {/* Recall */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🔧 Recall</Text>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIconWrap}>
+                <Feather name="tool" size={14} color={colors.accent} />
+              </View>
+              <Text style={styles.sectionTitle}>Recall</Text>
+            </View>
             {recalls.length > 0 ? (
               <View style={styles.card}>
                 {recalls.map((r) => (
@@ -192,57 +194,42 @@ export function ConsultasScreen() {
           </View>
         </>
       )}
-
-      <View style={{ height: 32 }} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F5F5F5', padding: 32 },
-  emptyText: { fontSize: 14, color: '#757575', textAlign: 'center' },
-  header: {
-    backgroundColor: '#1B5E20', padding: 24, paddingTop: 56,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-  },
-  backText: { color: '#A5D6A7', fontSize: 15, width: 60 },
-  title: { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
-  errorBox: { margin: 16, padding: 12, backgroundColor: '#FFEBEE', borderRadius: 8 },
-  errorText: { color: '#C62828', fontSize: 13 },
-  section: { marginHorizontal: 16, marginTop: 16 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#212121', marginBottom: 8 },
-  badge: { backgroundColor: '#E53935', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
-  badgeText: { color: '#FFF', fontSize: 12, fontWeight: '700' },
-  card: { backgroundColor: '#FFF', borderRadius: 10, padding: 14, elevation: 1 },
-  emptyCard: { backgroundColor: '#FFF', borderRadius: 10, padding: 20, alignItems: 'center' },
-  emptyCardText: { color: '#BDBDBD', fontSize: 13 },
+  container: { flex: 1, backgroundColor: colors.bg },
+  headerPad: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 8 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg, padding: 32 },
+  emptyText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
+  errorBox: { marginHorizontal: 20, padding: 12, backgroundColor: colors.dangerSoftBg, borderRadius: 10 },
+  errorText: { color: colors.danger, fontSize: 13 },
+  section: { marginHorizontal: 20, marginTop: 18, gap: 10 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  sectionIconWrap: { width: 28, height: 28, borderRadius: 9, backgroundColor: colors.accentSoftBg, alignItems: 'center', justifyContent: 'center' },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, flexGrow: 1 },
+  badge: { backgroundColor: colors.danger, borderRadius: 100, paddingHorizontal: 9, paddingVertical: 3 },
+  badgeText: { color: colors.white, fontSize: 12, fontWeight: '700' },
+  card: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 14 },
+  emptyCard: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 14, padding: 20, alignItems: 'center' },
+  emptyCardText: { color: colors.textTertiary, fontSize: 13 },
   row: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F5F5F5',
+    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.divider,
   },
-  rowTitle: { fontSize: 14, fontWeight: '600', color: '#212121' },
-  rowSub: { fontSize: 12, color: '#9E9E9E', marginTop: 2 },
-  rowValue: { fontSize: 14, fontWeight: '700', color: '#212121' },
-  ipvaTotal: { fontSize: 16, fontWeight: 'bold', color: '#1B5E20', marginBottom: 8 },
-  paga: { color: '#2E7D32' },
-  pendente: { color: '#C62828' },
-  // Formulário de placa
+  rowTitle: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  rowSub: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
+  rowValue: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  rowValueDanger: { fontSize: 14, fontWeight: '700', color: colors.danger },
+  ipvaTotal: { fontSize: 16, fontWeight: 'bold', color: colors.textPrimary, marginBottom: 8 },
+  paga: { color: colors.success },
+  pendente: { color: colors.danger },
   plateCard: {
-    backgroundColor: '#FFF', borderRadius: 12, padding: 24, margin: 16,
-    alignItems: 'center', elevation: 1,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 18, padding: 24, margin: 20,
+    alignItems: 'center', gap: 8,
   },
-  plateIcon: { fontSize: 40, marginBottom: 12 },
-  plateTitle: { fontSize: 17, fontWeight: 'bold', color: '#1B5E20', marginBottom: 6, textAlign: 'center' },
-  plateSubtitle: { fontSize: 13, color: '#757575', textAlign: 'center', marginBottom: 20, lineHeight: 19 },
-  label: { fontSize: 13, fontWeight: '600', color: '#424242', marginBottom: 6, alignSelf: 'flex-start' },
-  input: {
-    width: '100%', borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8,
-    paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: '#212121',
-    backgroundColor: '#FAFAFA', marginBottom: 12,
-  },
-  btn: { backgroundColor: '#1B5E20', borderRadius: 8, paddingVertical: 14, alignItems: 'center', width: '100%', marginTop: 8 },
-  btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#FFF', fontSize: 15, fontWeight: 'bold' },
+  plateIconWrap: { width: 48, height: 48, borderRadius: 16, backgroundColor: colors.accentSoftBg, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  plateTitle: { fontSize: 17, fontWeight: 'bold', color: colors.textPrimary, textAlign: 'center' },
+  plateSubtitle: { fontSize: 13, color: colors.textSecondary, textAlign: 'center', lineHeight: 19, marginBottom: 12 },
 });

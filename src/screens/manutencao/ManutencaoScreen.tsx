@@ -5,52 +5,100 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Feather from 'react-native-vector-icons/Feather';
 import { useMaintenanceStore } from '../../store/maintenanceStore';
 import { useVehicleStore } from '../../store/vehicleStore';
 import { Maintenance, Reminder } from '../../types/maintenance';
 import { HomeStackParamList } from '../../types/navigation';
-import { todayLocalISO, formatDateBR as formatDate } from '../../utils/date';
+import { daysBetween, formatDateBR as formatDate } from '../../utils/date';
 import { formatCurrencyBRL } from '../../utils/currency';
+import { colors } from '../../theme/colors';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
-function ReminderRow({ item, onSilence, onComplete }: {
-  item: Reminder; onSilence: (id: number) => void; onComplete: (id: number) => void;
+function reminderStatus(dataPrevista: string): { tone: 'danger' | 'warning' | 'success'; label: string } {
+  const diff = daysBetween(dataPrevista);
+  if (diff < 0) return { tone: 'danger', label: `Atrasado há ${Math.abs(diff)} dia${Math.abs(diff) === 1 ? '' : 's'}` };
+  if (diff === 0) return { tone: 'danger', label: 'Vence hoje' };
+  if (diff <= 14) return { tone: 'warning', label: `Vence em ${diff} dia${diff === 1 ? '' : 's'}` };
+  return { tone: 'success', label: `Previsto para ${formatDate(dataPrevista)}` };
+}
+
+// Indexados dinamicamente por `tone` — por isso ficam fora do StyleSheet.create,
+// que exige chaves estáticas.
+const TONE_DOT: Record<'danger' | 'warning' | 'success', { backgroundColor: string; borderColor: string }> = {
+  danger: { backgroundColor: colors.danger, borderColor: colors.danger },
+  warning: { backgroundColor: colors.warning, borderColor: colors.warning },
+  success: { backgroundColor: colors.success, borderColor: colors.success },
+};
+const TONE_TEXT: Record<'danger' | 'warning' | 'success', { color: string }> = {
+  danger: { color: colors.danger },
+  warning: { color: colors.warning },
+  success: { color: colors.success },
+};
+
+function TimelineSpine({ tone, hollow, isFirst, isLast }: {
+  tone: 'danger' | 'warning' | 'success'; hollow?: boolean; isFirst: boolean; isLast: boolean;
 }) {
-  const atrasado = item.dataPrevista < todayLocalISO();
   return (
-    <View style={styles.reminderRow}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.reminderTipo}>{item.tipo}</Text>
-        <Text style={[styles.reminderData, atrasado && styles.reminderAtrasado]}>
-          {atrasado ? 'Atrasado — ' : 'Previsto para '}{formatDate(item.dataPrevista)}
-        </Text>
-      </View>
-      <TouchableOpacity onPress={() => onComplete(item.id)} style={styles.reminderBtn}>
-        <Text style={styles.reminderBtnText}>✓ Feito</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => onSilence(item.id)} style={styles.reminderBtnGhost}>
-        <Text style={styles.reminderBtnGhostText}>Silenciar</Text>
-      </TouchableOpacity>
+    <View style={styles.spineCol}>
+      <View style={[styles.spineLine, isFirst && styles.spineLineHidden]} />
+      <View style={[styles.spineDot, TONE_DOT[tone], hollow && styles.spineDotHollow]} />
+      <View style={[styles.spineLine, isLast && styles.spineLineHidden]} />
     </View>
   );
 }
 
-function MaintenanceRow({ item, onDelete }: { item: Maintenance; onDelete: (id: number) => void }) {
+function ReminderRow({
+  item, isFirst, isLast, onSilence, onComplete,
+}: {
+  item: Reminder; isFirst: boolean; isLast: boolean;
+  onSilence: (id: number) => void; onComplete: (id: number) => void;
+}) {
+  const status = reminderStatus(item.dataPrevista);
   return (
-    <View style={styles.card}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.cardTipo}>{item.tipo}</Text>
-        {item.descricao ? <Text style={styles.cardDesc} numberOfLines={1}>{item.descricao}</Text> : null}
-        <Text style={styles.cardData}>
-          {formatDate(item.data)}{item.km != null ? ` · ${item.km.toLocaleString('pt-BR')} km` : ''}
-        </Text>
+    <View style={styles.timelineRow}>
+      <TimelineSpine tone={status.tone} isFirst={isFirst} isLast={isLast} />
+      <View style={styles.rowContent}>
+        <Text style={styles.rowTitle}>{item.tipo}</Text>
+        <Text style={[styles.rowStatus, TONE_TEXT[status.tone]]}>{status.label}</Text>
+        <View style={styles.rowActions}>
+          <TouchableOpacity onPress={() => onComplete(item.id)} style={styles.chipBtn}>
+            <Text style={styles.chipBtnText}>Feito</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => onSilence(item.id)} style={styles.ghostBtn}>
+            <Text style={styles.ghostBtnText}>Silenciar</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <View style={{ alignItems: 'flex-end' }}>
-        {item.custo != null && <Text style={styles.cardValor}>{formatCurrencyBRL(item.custo)}</Text>}
-        <TouchableOpacity onPress={() => onDelete(item.id)}>
-          <Text style={styles.deleteBtn}>🗑️</Text>
-        </TouchableOpacity>
+    </View>
+  );
+}
+
+function MaintenanceRow({
+  item, isFirst, isLast, onDelete,
+}: {
+  item: Maintenance; isFirst: boolean; isLast: boolean; onDelete: (id: number) => void;
+}) {
+  return (
+    <View style={styles.timelineRow}>
+      <TimelineSpine tone="success" hollow isFirst={isFirst} isLast={isLast} />
+      <View style={styles.rowContent}>
+        <View style={styles.rowHeadLine}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.rowTitle}>{item.tipo}</Text>
+            {item.descricao ? <Text style={styles.rowDesc} numberOfLines={1}>{item.descricao}</Text> : null}
+          </View>
+          {item.custo != null && <Text style={styles.rowValor}>{formatCurrencyBRL(item.custo)}</Text>}
+        </View>
+        <View style={styles.rowFootLine}>
+          <Text style={styles.rowMeta}>
+            {formatDate(item.data)}{item.km != null ? ` · ${item.km.toLocaleString('pt-BR')} km` : ''}
+          </Text>
+          <TouchableOpacity onPress={() => onDelete(item.id)} hitSlop={8}>
+            <Text style={styles.deleteBtn}>Excluir</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -104,56 +152,80 @@ export function ManutencaoScreen() {
     }
   };
 
-  const proximos = reminders.filter((r) => !r.concluido && !r.silenciado);
+  const proximos = reminders
+    .filter((r) => !r.concluido && !r.silenciado)
+    .slice()
+    .sort((a, b) => a.dataPrevista.localeCompare(b.dataPrevista));
+
+  const historico = maintenances.slice().sort((a, b) => b.data.localeCompare(a.data));
 
   if (!activeVehicle) {
     return (
       <View style={styles.center}>
-        <Text style={styles.emptySubtitle}>Cadastre um veículo primeiro</Text>
+        <Text style={styles.emptySubtitle}>Cadastre um veículo pra começar a acompanhar a manutenção.</Text>
       </View>
     );
   }
 
+  const vehicleLine = [activeVehicle.marca, activeVehicle.modelo].filter(Boolean).join(' ')
+    + (activeVehicle.placa ? ` · ${activeVehicle.placa}` : '');
+
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1B5E20" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
     >
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>← Voltar</Text>
-        </TouchableOpacity>
+        <View style={styles.headerTopRow}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={8}>
+            <Feather name="chevron-left" size={18} color={colors.textSecondary} />
+            <Text style={styles.backText}>Voltar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => navigation.navigate('NewMaintenance', { vehicleId: activeVehicle.id })}
+          >
+            <Feather name="plus" size={14} color={colors.white} />
+            <Text style={styles.addBtnText}>Nova</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.title}>Manutenção</Text>
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => navigation.navigate('NewMaintenance', { vehicleId: activeVehicle.id })}
-        >
-          <Text style={styles.addBtnText}>+ Nova</Text>
-        </TouchableOpacity>
+        {vehicleLine ? <Text style={styles.vehicleLine}>{vehicleLine}</Text> : null}
       </View>
 
-      {isLoading && <ActivityIndicator color="#1B5E20" style={{ marginTop: 24 }} />}
+      {isLoading && <ActivityIndicator color={colors.accent} style={{ marginTop: 20 }} />}
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Próximos lembretes</Text>
+      <View style={styles.timeline}>
         {proximos.length > 0 ? (
-          proximos.map((r) => (
-            <ReminderRow key={r.id} item={r} onSilence={handleSilence} onComplete={handleComplete} />
+          proximos.map((r, i) => (
+            <ReminderRow
+              key={r.id} item={r} isFirst={i === 0} isLast={false}
+              onSilence={handleSilence} onComplete={handleComplete}
+            />
           ))
         ) : (
-          <View style={styles.emptySection}>
-            <Text style={styles.emptySectionText}>Nenhum lembrete cadastrado</Text>
+          <View style={styles.emptyNotice}>
+            <Text style={styles.emptyNoticeText}>
+              Nenhum lembrete agendado. Ao registrar uma manutenção, você pode já marcar a próxima.
+            </Text>
           </View>
         )}
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Histórico</Text>
-        {maintenances.length > 0 ? (
-          maintenances.map((m) => <MaintenanceRow key={m.id} item={m} onDelete={confirmDelete} />)
+        <View style={styles.todayDivider}>
+          <View style={styles.todayLine} />
+          <Text style={styles.todayLabel}>Hoje</Text>
+          <View style={styles.todayLine} />
+        </View>
+
+        {historico.length > 0 ? (
+          historico.map((m, i) => (
+            <MaintenanceRow key={m.id} item={m} isFirst={i === 0} isLast={i === historico.length - 1} onDelete={confirmDelete} />
+          ))
         ) : (
-          <View style={styles.emptySection}>
-            <Text style={styles.emptySectionText}>Nenhuma manutenção registrada</Text>
+          <View style={styles.emptyNotice}>
+            <Text style={styles.emptyNoticeText}>
+              Nenhuma manutenção registrada ainda. Toque em "+ Nova" pra começar o histórico deste veículo.
+            </Text>
           </View>
         )}
       </View>
@@ -164,39 +236,52 @@ export function ManutencaoScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F5F5F5', padding: 32 },
-  emptySubtitle: { fontSize: 14, color: '#757575', textAlign: 'center' },
-  header: {
-    backgroundColor: '#1B5E20', padding: 24, paddingTop: 56,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+  container: { flex: 1, backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg, padding: 32 },
+  emptySubtitle: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
+
+  header: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 18 },
+  headerTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  backText: { color: colors.textSecondary, fontSize: 14 },
+  title: { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginTop: 14 },
+  vehicleLine: { fontSize: 13, color: colors.textSecondary, marginTop: 3 },
+  addBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 14,
   },
-  backText: { color: '#A5D6A7', fontSize: 15 },
-  title: { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
-  addBtn: { backgroundColor: '#FFF', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12 },
-  addBtnText: { color: '#1B5E20', fontSize: 13, fontWeight: '700' },
-  section: { marginHorizontal: 16, marginTop: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#212121', marginBottom: 8 },
-  emptySection: { backgroundColor: '#FFF', borderRadius: 10, padding: 20, alignItems: 'center' },
-  emptySectionText: { color: '#BDBDBD', fontSize: 14 },
-  card: {
-    backgroundColor: '#FFF', borderRadius: 10, padding: 14, marginBottom: 8,
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-  },
-  cardTipo: { fontSize: 14, fontWeight: '700', color: '#212121' },
-  cardDesc: { fontSize: 12, color: '#757575', marginTop: 2 },
-  cardData: { fontSize: 12, color: '#9E9E9E', marginTop: 4 },
-  cardValor: { fontSize: 14, fontWeight: '700', color: '#1B5E20', marginBottom: 4 },
-  deleteBtn: { fontSize: 16 },
-  reminderRow: {
-    backgroundColor: '#FFF', borderRadius: 10, padding: 14, marginBottom: 8,
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-  },
-  reminderTipo: { fontSize: 14, fontWeight: '700', color: '#212121' },
-  reminderData: { fontSize: 12, color: '#757575', marginTop: 2 },
-  reminderAtrasado: { color: '#C62828', fontWeight: '600' },
-  reminderBtn: { backgroundColor: '#E8F5E9', borderRadius: 6, paddingVertical: 6, paddingHorizontal: 10 },
-  reminderBtnText: { color: '#1B5E20', fontSize: 12, fontWeight: '700' },
-  reminderBtnGhost: { paddingVertical: 6, paddingHorizontal: 6 },
-  reminderBtnGhostText: { color: '#9E9E9E', fontSize: 12 },
+  addBtnText: { color: colors.white, fontSize: 13, fontWeight: '700' },
+
+  timeline: { paddingHorizontal: 20, paddingTop: 6 },
+
+  timelineRow: { flexDirection: 'row' },
+  spineCol: { width: 26, alignItems: 'center' },
+  spineLine: { width: 2, flex: 1, backgroundColor: colors.border, minHeight: 10 },
+  spineLineHidden: { backgroundColor: 'transparent' },
+  spineDot: { width: 11, height: 11, borderRadius: 6, marginVertical: 4 },
+  spineDotHollow: { backgroundColor: colors.bg, borderWidth: 2 },
+
+  rowContent: { flex: 1, paddingBottom: 22, paddingLeft: 10 },
+  rowTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+  rowStatus: { fontSize: 13, fontWeight: '600', marginTop: 3 },
+  rowDesc: { fontSize: 12.5, color: colors.textSecondary, marginTop: 2 },
+
+  rowActions: { flexDirection: 'row', gap: 10, marginTop: 10 },
+  chipBtn: { backgroundColor: colors.successSoftBg, borderRadius: 7, paddingVertical: 6, paddingHorizontal: 12 },
+  chipBtnText: { color: colors.success, fontSize: 12.5, fontWeight: '700' },
+  ghostBtn: { paddingVertical: 6, paddingHorizontal: 4 },
+  ghostBtnText: { color: colors.textSecondary, fontSize: 12.5 },
+
+  rowHeadLine: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  rowValor: { fontSize: 14.5, fontWeight: '700', color: colors.textPrimary, fontVariant: ['tabular-nums'] },
+  rowFootLine: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
+  rowMeta: { fontSize: 12.5, color: colors.textTertiary, fontVariant: ['tabular-nums'] },
+  deleteBtn: { fontSize: 12.5, color: colors.danger },
+
+  todayDivider: { flexDirection: 'row', alignItems: 'center', marginLeft: 26, paddingLeft: 10, marginBottom: 14 },
+  todayLine: { flex: 1, height: 1, backgroundColor: colors.border },
+  todayLabel: { fontSize: 12, color: colors.textTertiary, fontWeight: '600', marginHorizontal: 10 },
+
+  emptyNotice: { paddingLeft: 36, paddingBottom: 20, paddingRight: 4 },
+  emptyNoticeText: { fontSize: 13.5, color: colors.textSecondary, lineHeight: 19 },
 });

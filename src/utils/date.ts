@@ -27,3 +27,14 @@ export function formatDateTimeBR(iso: string): string {
   const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   return `${data} às ${hora}`;
 }
+
+// Dias entre hoje e "YYYY-MM-DD" — positivo = data no futuro, negativo = já passou.
+// Zera as horas dos dois lados antes de subtrair pra não variar com o horário atual.
+export function daysBetween(dateStr: string): number {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const target = new Date(y, m - 1, d);
+  target.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((target.getTime() - today.getTime()) / 86400000);
+}
