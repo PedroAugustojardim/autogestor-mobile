@@ -63,7 +63,7 @@ export function ResetPasswordScreen({ navigation }: Props) {
 
         <View style={styles.brandBlock}>
           <Text style={styles.title}>Redefinir senha</Text>
-          <Text style={styles.subtitle}>Cole o código que enviamos por email e escolha uma nova senha.</Text>
+          <Text style={styles.subtitle}>Cole o código recebido e escolha a nova senha</Text>
         </View>
 
         <View style={styles.form}>

@@ -22,6 +22,14 @@ export interface Reminder {
   createdAt: string;
 }
 
+// Sugestão automática de data devolvida por GET /vehicles/:id/maintenance/predict
+// — ver autogestor-api/src/utils/maintenancePrediction.ts pro motor de cálculo.
+export interface MaintenancePrediction {
+  dataPrevista: string; // 'YYYY-MM-DD'
+  atrasado: boolean;
+  baseadoEm: 'km' | 'tempo' | 'km_e_tempo';
+}
+
 export interface CreateMaintenanceDTO {
   tipo: string;
   data: string;

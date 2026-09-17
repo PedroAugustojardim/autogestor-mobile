@@ -112,7 +112,7 @@ export function NewExpenseScreen() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 {FUEL_TYPES.map((t) => (
-                  <SelectableChip key={t} label={t} selected={tipoCombustivel === t} onPress={() => setTipoCombustivel(t)} />
+                  <SelectableChip key={t} label={t} selected={tipoCombustivel === t} onPress={() => setTipoCombustivel(t)} selectedColor="#FB923C" />
                 ))}
               </View>
             </ScrollView>
@@ -130,9 +130,15 @@ export function NewExpenseScreen() {
         {/* Campos principais */}
         <View style={styles.form}>
           <FormField label="Valor (R$)" required placeholder="0,00" keyboardType="decimal-pad" value={valor} onChangeText={setValor} />
-          <FormField label="Data" required placeholder="AAAA-MM-DD" value={data} onChangeText={setData} />
-          <FormField label="KM atual" optional placeholder="Ex: 52000" keyboardType="number-pad" value={km} onChangeText={setKm} />
-          <FormField label="Observação" optional placeholder="Ex: Oficina do João, troca de óleo 5W30" multiline style={{ height: 80 }} textAlignVertical="top" value={descricao} onChangeText={setDescricao} />
+          <View style={styles.row}>
+            <View style={{ flex: 1 }}>
+              <FormField label="Data" required placeholder="AAAA-MM-DD" value={data} onChangeText={setData} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <FormField label="KM atual" placeholder="Ex: 52000" keyboardType="number-pad" value={km} onChangeText={setKm} />
+            </View>
+          </View>
+          <FormField label="Observação" placeholder="Ex: Oficina do João, troca de óleo 5W30" multiline style={{ height: 80 }} textAlignVertical="top" value={descricao} onChangeText={setDescricao} />
 
           <PrimaryButton label="Salvar gasto" onPress={handleSubmit} loading={isLoading} />
         </View>
@@ -149,12 +155,12 @@ const styles = StyleSheet.create({
   label: { fontSize: 12.5, fontWeight: '600', color: colors.textMuted, marginBottom: 10 },
   catGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   catCard: {
-    width: '22%', aspectRatio: 1, backgroundColor: colors.surface, borderRadius: 12,
-    alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.border, padding: 4,
+    width: '31%', aspectRatio: 1, backgroundColor: colors.surface, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.border, padding: 6,
   },
   catCardSel: { borderColor: colors.accent, backgroundColor: colors.accentSoftBg },
-  catIcon: { fontSize: 20, marginBottom: 4 },
-  catNome: { fontSize: 9, color: colors.textMuted, textAlign: 'center' },
+  catIcon: { fontSize: 20, marginBottom: 5 },
+  catNome: { fontSize: 11, color: colors.textMuted, textAlign: 'center' },
   catNomeSel: { color: colors.accent, fontWeight: '700' },
   fuelBox: { backgroundColor: '#2A1B0E', borderWidth: 1, borderColor: '#4A3218', borderRadius: 14, padding: 14, marginTop: 16, gap: 10 },
   fuelTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },

@@ -14,6 +14,7 @@ import { useAuthStore } from '../../store/authStore';
 import { MonthlyPoint, CategoryReport, PdfReportData } from '../../types/report';
 import { formatCurrencyBRL as formatCurrency } from '../../utils/currency';
 import { PrimaryButton } from '../../components/PrimaryButton';
+import { BackHeader } from '../../components/BackHeader';
 import { colors } from '../../theme/colors';
 
 // Categoria, descrição e apelido do veículo são texto livre do usuário — nunca interpolar
@@ -81,6 +82,10 @@ function buildReportHtml(data: PdfReportData): string {
 }
 
 const MESES_NOME = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+const MESES_NOME_FULL = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+];
 
 // Gráfico de barras simples (sem dependência externa)
 function BarChart({ data }: { data: MonthlyPoint[] }) {
@@ -215,29 +220,27 @@ export function RelatoriosScreen() {
     >
       {/* Cabeçalho */}
       <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.title}>Relatórios</Text>
-            <Text style={styles.vehicle}>
-              {activeVehicle.apelido ?? `${activeVehicle.marca} ${activeVehicle.modelo}`}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.exportBtn}
-            onPress={exportPdf}
-            disabled={exporting}
-          >
-            {exporting
-              ? <ActivityIndicator color={colors.textPrimary} size="small" />
-              : (
-                <>
-                  <Feather name="download" size={13} color={colors.textPrimary} />
-                  <Text style={styles.exportBtnText}>Exportar PDF</Text>
-                </>
-              )
-            }
-          </TouchableOpacity>
-        </View>
+        <BackHeader
+          title="Relatórios"
+          subtitle={activeVehicle.apelido ?? `${activeVehicle.marca} ${activeVehicle.modelo}`}
+          right={
+            <TouchableOpacity
+              style={styles.exportBtn}
+              onPress={exportPdf}
+              disabled={exporting}
+            >
+              {exporting
+                ? <ActivityIndicator color={colors.textPrimary} size="small" />
+                : (
+                  <>
+                    <Feather name="download" size={13} color={colors.textPrimary} />
+                    <Text style={styles.exportBtnText}>Exportar PDF</Text>
+                  </>
+                )
+              }
+            </TouchableOpacity>
+          }
+        />
       </View>
 
       {/* Tabs */}
@@ -277,18 +280,17 @@ export function RelatoriosScreen() {
               <BarChart data={monthly} />
               <View style={styles.divider} />
               {monthly.map((m, i) => (
-                <View key={i} style={styles.monthRow}>
-                  <Text style={styles.monthLabel}>
-                    {MESES_NOME[m.mes - 1]}/{String(m.ano).slice(2)}
+                <View key={i} style={styles.expenseRow}>
+                  <Text style={styles.expenseLabel}>
+                    {MESES_NOME_FULL[m.mes - 1]} {m.ano} · {m.quantidade} gasto{m.quantidade === 1 ? '' : 's'}
                   </Text>
-                  <Text style={styles.monthQtd}>{m.quantidade} gasto(s)</Text>
-                  <Text style={styles.monthTotal}>
+                  <Text style={styles.expenseTotal}>
                     {formatCurrency(m.total)}
                   </Text>
                 </View>
               ))}
               <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Total período</Text>
+                <Text style={styles.totalLabel}>Total no período</Text>
                 <Text style={styles.totalValor}>
                   {formatCurrency(monthly.reduce((s, m) => s + m.total, 0))}
                 </Text>
@@ -427,13 +429,10 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 19, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
   emptySubtitle: { fontSize: 14, color: colors.textSecondary, textAlign: 'center' },
   header: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 8 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  title: { fontSize: 21, fontWeight: '700', color: colors.textPrimary },
-  vehicle: { fontSize: 12.5, color: colors.textSecondary, marginTop: 2 },
   exportBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 10,
-    paddingVertical: 9, paddingHorizontal: 13,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 100,
+    paddingVertical: 9, paddingHorizontal: 14,
   },
   exportBtnText: { color: colors.textPrimary, fontSize: 12, fontWeight: '700' },
   tabs: { flexDirection: 'row', marginTop: 18, marginHorizontal: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 4 },
@@ -448,6 +447,9 @@ const styles = StyleSheet.create({
   monthLabel: { width: 52, fontSize: 13, color: colors.textSecondary },
   monthQtd: { flex: 1, fontSize: 12, color: colors.textTertiary },
   monthTotal: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  expenseRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
+  expenseLabel: { flex: 1, fontSize: 13, color: colors.textMuted, marginRight: 8 },
+  expenseTotal: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.divider },
   totalLabel: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
   totalValor: { fontSize: 14, fontWeight: '700', color: colors.accent },

@@ -55,7 +55,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
           Se o email estiver cadastrado, você receberá as instruções para redefinir sua senha.
         </Text>
         <PrimaryButton label="Já tenho um código" onPress={() => navigation.navigate('ResetPassword')} />
-        <PrimaryButton label="Voltar ao Login" variant="ghost" onPress={() => navigation.navigate('Login')} />
+        <PrimaryButton label="Voltar ao login" variant="ghost" onPress={() => navigation.navigate('Login')} />
       </View>
     );
   }
@@ -71,7 +71,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
         <View style={styles.brandBlock}>
           <Text style={styles.title}>Recuperar senha</Text>
           <Text style={styles.subtitle}>
-            Digite seu email e enviaremos as instruções para criar uma nova senha.
+            Enviaremos um código para o seu email
           </Text>
         </View>
 
@@ -93,8 +93,9 @@ export function ForgotPasswordScreen({ navigation }: Props) {
           />
 
           <PrimaryButton label="Enviar instruções" onPress={handleSubmit(onSubmit)} loading={loading} />
-          <PrimaryButton label="Já tenho um código" variant="ghost" onPress={() => navigation.navigate('ResetPassword')} />
         </View>
+
+        <PrimaryButton label="Já tenho um código" variant="ghost" onPress={() => navigation.navigate('ResetPassword')} />
       </View>
     </KeyboardAvoidingView>
   );

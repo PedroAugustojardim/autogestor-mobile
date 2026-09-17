@@ -18,7 +18,7 @@ function Requirement({ ok, label }: { ok: boolean; label: string }) {
   return (
     <View style={styles.reqRow}>
       {ok
-        ? <Feather name="check-circle" size={15} color={colors.success} />
+        ? <Feather name="check" size={15} color={colors.success} />
         : <View style={styles.reqCircle} />}
       <Text style={[styles.reqText, ok && styles.reqTextOk]}>{label}</Text>
     </View>
@@ -70,7 +70,7 @@ export function AlterarSenhaScreen() {
           <FormField
             label="Confirmar nova senha"
             placeholder="Repita a nova senha"
-            secureToggle
+            secureTextEntry
             value={confirm}
             onChangeText={setConfirm}
             error={confirm !== '' && newPassword !== confirm ? 'As senhas não coincidem' : undefined}

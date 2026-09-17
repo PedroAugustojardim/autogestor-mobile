@@ -6,6 +6,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { AuthStackParamList } from '../../types/navigation';
 import { useAuthStore } from '../../store/authStore';
 import { FormField } from '../../components/FormField';
@@ -45,7 +46,7 @@ export function LoginScreen({ navigation }: Props) {
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.brandBlock}>
           <View style={styles.logoBadge}>
-            <Text style={styles.logoBadgeText}>A</Text>
+            <MaterialCommunityIcons name="car-outline" size={26} color={colors.white} />
           </View>
           <Text style={styles.title}>AutoGestor</Text>
           <Text style={styles.subtitle}>Entre na sua conta</Text>
@@ -83,11 +84,13 @@ export function LoginScreen({ navigation }: Props) {
             )}
           />
 
-          <PrimaryButton
-            label="Esqueci minha senha"
-            variant="ghost"
-            onPress={() => navigation.navigate('ForgotPassword')}
-          />
+          <View style={styles.forgotLinkRow}>
+            <PrimaryButton
+              label="Esqueci minha senha"
+              variant="ghost"
+              onPress={() => navigation.navigate('ForgotPassword')}
+            />
+          </View>
 
           <PrimaryButton
             label="Entrar"

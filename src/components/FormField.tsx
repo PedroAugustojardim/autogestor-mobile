@@ -4,7 +4,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import { colors } from '../theme/colors';
 
 export function FormField({
-  label, required, optional, error, secureToggle, style, ...rest
+  label, required, optional, error, secureToggle, style, onFocus, onBlur, ...rest
 }: {
   label: string;
   required?: boolean;
@@ -13,6 +13,7 @@ export function FormField({
   secureToggle?: boolean;
 } & TextInputProps) {
   const [visible, setVisible] = useState(false);
+  const [focused, setFocused] = useState(false);
 
   return (
     <View style={styles.wrap}>
@@ -26,11 +27,14 @@ export function FormField({
           style={[
             styles.input,
             secureToggle ? { paddingRight: 44 } : null,
+            focused ? styles.inputFocusedBorder : null,
             error ? styles.inputErrorBorder : null,
             style,
           ]}
           placeholderTextColor={colors.textTertiary}
           secureTextEntry={secureToggle ? !visible : rest.secureTextEntry}
+          onFocus={(e) => { setFocused(true); onFocus?.(e); }}
+          onBlur={(e) => { setFocused(false); onBlur?.(e); }}
           {...rest}
         />
         {secureToggle && (
@@ -55,6 +59,7 @@ const styles = StyleSheet.create({
     borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
     fontSize: 14, color: colors.textPrimary,
   },
+  inputFocusedBorder: { borderColor: colors.accent },
   inputErrorBorder: { borderColor: colors.danger },
   eyeBtn: { position: 'absolute', right: 14 },
   errorText: { fontSize: 12, color: colors.danger },

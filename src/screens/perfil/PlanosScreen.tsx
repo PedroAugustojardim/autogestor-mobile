@@ -27,6 +27,7 @@ const FEATURES_PREMIUM = [
   'Veículos ilimitados',
   'Todos os relatórios (anual, categorias)',
   'Resumo anual completo',
+  'Consultas SP (multas, IPVA e recall)',
   'Exportar relatórios em PDF',
   'Suporte prioritário',
   'Sem anúncios',
@@ -118,17 +119,13 @@ export function PlanosScreen() {
       </TouchableOpacity>
 
       <Text style={styles.title}>Planos AutoGestor</Text>
-      <Text style={styles.subtitle}>Gerencie seus veículos sem limites</Text>
+      <Text style={styles.subtitle}>Desbloqueie todo o potencial do seu veículo</Text>
 
       {/* Plano atual */}
       {!isPremium && (
         <View style={styles.currentPlan}>
           <Text style={styles.currentPlanText}>Plano atual: Gratuito</Text>
-          <View style={{ gap: 4 }}>
-            {FEATURES_FREE.map((f, i) => (
-              <Text key={i} style={styles.freeFeat}>• {f}</Text>
-            ))}
-          </View>
+          <Text style={styles.freeFeat}>{FEATURES_FREE.join(' · ')}</Text>
         </View>
       )}
 
@@ -146,7 +143,7 @@ export function PlanosScreen() {
       <View style={styles.featuresCard}>
         {FEATURES_PREMIUM.map((f, i) => (
           <View key={i} style={styles.featRow}>
-            <Feather name="check-circle" size={15} color={colors.success} />
+            <Feather name="check" size={15} color={colors.success} />
             <Text style={styles.feat}>{f}</Text>
           </View>
         ))}
@@ -211,7 +208,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 13.5, color: colors.textSecondary, marginBottom: 20 },
   currentPlan: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 16, marginBottom: 18, gap: 10 },
   currentPlanText: { fontSize: 13.5, fontWeight: '600', color: colors.textSecondary },
-  freeFeat: { fontSize: 12.5, color: colors.textTertiary },
+  freeFeat: { fontSize: 12.5, color: colors.textTertiary, lineHeight: 17 },
   premiumBanner: { backgroundColor: colors.successSoftBg, borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 18 },
   premiumBannerTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
   premiumBannerSub: { fontSize: 13, color: colors.success, marginTop: 4 },
@@ -224,7 +221,10 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: colors.border, position: 'relative',
   },
   planCardSel: { borderColor: colors.accent, backgroundColor: colors.accentSoftBg },
-  badge: { backgroundColor: colors.accent, borderRadius: 100, paddingHorizontal: 10, paddingVertical: 3, alignSelf: 'flex-start', marginBottom: 10 },
+  badge: {
+    position: 'absolute', top: -10, left: 16, zIndex: 1,
+    backgroundColor: colors.accent, borderRadius: 100, paddingHorizontal: 10, paddingVertical: 4,
+  },
   badgeText: { color: colors.white, fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
   planRow: { flexDirection: 'row', alignItems: 'center' },
   planTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },

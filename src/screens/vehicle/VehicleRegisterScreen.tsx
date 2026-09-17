@@ -54,7 +54,7 @@ export function VehicleRegisterScreen() {
         </TouchableOpacity>
 
         <Text style={styles.title}>Cadastrar veículo</Text>
-        <Text style={styles.subtitle}>Escolha o tipo e preencha os dados</Text>
+        <Text style={styles.subtitle}>Pra começar a registrar gastos e manutenções</Text>
 
         <Text style={styles.label}>Tipo do veículo</Text>
         <View style={styles.typeGrid}>
@@ -75,9 +75,15 @@ export function VehicleRegisterScreen() {
         <View style={styles.form}>
           <FormField label="Marca" required placeholder="Ex: Toyota, Honda, Fiat..." autoCapitalize="words" value={marca} onChangeText={setMarca} />
           <FormField label="Modelo" required placeholder="Ex: Corolla, Civic, Argo..." autoCapitalize="words" value={modelo} onChangeText={setModelo} />
-          <FormField label="Ano" optional placeholder="Ex: 2020" keyboardType="numeric" maxLength={4} value={ano} onChangeText={setAno} />
-          <FormField label="Cor" optional placeholder="Ex: Prata, Preto, Branco..." autoCapitalize="words" value={cor} onChangeText={setCor} />
-          <FormField label="Apelido" optional placeholder="Ex: Meu Carrão, Motinha..." value={apelido} onChangeText={setApelido} />
+          <View style={styles.row}>
+            <View style={{ flex: 1 }}>
+              <FormField label="Ano" placeholder="Ex: 2020" keyboardType="numeric" maxLength={4} value={ano} onChangeText={setAno} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <FormField label="Cor" placeholder="Ex: Prata, Preto, Branco..." autoCapitalize="words" value={cor} onChangeText={setCor} />
+            </View>
+          </View>
+          <FormField label="Apelido" placeholder="Ex: Meu Carrão, Motinha..." value={apelido} onChangeText={setApelido} />
 
           <View style={styles.hintRow}>
             <Feather name="lock" size={13} color={colors.textTertiary} />
@@ -110,6 +116,7 @@ const styles = StyleSheet.create({
   typeLabelSelected: { color: colors.accent },
 
   form: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 18, padding: 18, gap: 12 },
+  row: { flexDirection: 'row', gap: 10 },
   hintRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingHorizontal: 2 },
   hint: { flex: 1, fontSize: 11.5, color: colors.textTertiary, lineHeight: 15 },
 });

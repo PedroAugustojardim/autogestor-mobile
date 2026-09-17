@@ -109,17 +109,15 @@ export function ConsultasScreen() {
               )}
             </View>
             {fines.length > 0 ? (
-              <View style={styles.card}>
-                {fines.map((f) => (
-                  <View key={f.id} style={styles.row}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.rowTitle}>{f.descricao}</Text>
-                      <Text style={styles.rowSub}>{f.orgao} · {formatDate(f.data)}</Text>
-                    </View>
-                    <Text style={styles.rowValueDanger}>{formatCurrency(f.valor)}</Text>
+              fines.map((f) => (
+                <View key={f.id} style={[styles.card, styles.rowNoBorder]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.rowTitle}>{f.descricao}</Text>
+                    <Text style={styles.rowSub}>{f.orgao} · {formatDate(f.data)}</Text>
                   </View>
-                ))}
-              </View>
+                  <Text style={styles.rowValueDanger}>{formatCurrency(f.valor)}</Text>
+                </View>
+              ))
             ) : (
               <View style={styles.emptyCard}><Text style={styles.emptyCardText}>Nenhuma multa encontrada</Text></View>
             )}
@@ -133,22 +131,27 @@ export function ConsultasScreen() {
               </View>
               <Text style={styles.sectionTitle}>IPVA {ipva?.ano}</Text>
             </View>
-            {ipva && (
-              <View style={styles.card}>
-                <Text style={styles.ipvaTotal}>Total: {formatCurrency(ipva.valorTotal)}</Text>
-                {ipva.parcelas.map((p) => (
-                  <View key={p.numero} style={styles.row}>
-                    <Text style={styles.rowTitle}>Parcela {p.numero}</Text>
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={styles.rowValue}>{formatCurrency(p.valor)}</Text>
-                      <Text style={[styles.rowSub, p.paga ? styles.paga : styles.pendente]}>
-                        {p.paga ? 'Paga' : `Vence ${formatDate(p.vencimento)}`}
-                      </Text>
+            {ipva && (() => {
+              // Só a próxima parcela em aberto (a mais próxima do vencimento) é
+              // destacada em vermelho — as demais em aberto ficam neutras, igual ao design.
+              const nextUnpaidIdx = ipva.parcelas.findIndex((p) => !p.paga);
+              return (
+                <View style={styles.card}>
+                  <Text style={styles.ipvaTotal}>Total: {formatCurrency(ipva.valorTotal)}</Text>
+                  {ipva.parcelas.map((p, i) => (
+                    <View key={p.numero} style={styles.row}>
+                      <Text style={styles.rowTitle}>Parcela {p.numero}</Text>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={styles.rowValue}>{formatCurrency(p.valor)}</Text>
+                        <Text style={[styles.rowSub, p.paga ? styles.paga : (i === nextUnpaidIdx ? styles.pendente : styles.neutra)]}>
+                          {p.paga ? 'Paga' : `Vence ${formatDate(p.vencimento)}`}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                ))}
-              </View>
-            )}
+                  ))}
+                </View>
+              );
+            })()}
           </View>
 
           {/* Licenciamento */}
@@ -160,11 +163,11 @@ export function ConsultasScreen() {
               <Text style={styles.sectionTitle}>Licenciamento</Text>
             </View>
             {debts && (
-              <View style={styles.card}>
-                <View style={styles.row}>
-                  <Text style={styles.rowTitle}>Vencimento</Text>
-                  <Text style={[styles.rowValue, debts.licenciamento.pendente ? styles.pendente : styles.paga]}>
-                    {formatDate(debts.licenciamento.vencimento)} {debts.licenciamento.pendente ? '· Pendente' : '· Em dia'}
+              <View style={[styles.card, styles.rowNoBorder]}>
+                <Text style={styles.rowTitle}>Vencimento {formatDate(debts.licenciamento.vencimento)}</Text>
+                <View style={[styles.statusPill, debts.licenciamento.pendente ? styles.statusPillDanger : styles.statusPillSuccess]}>
+                  <Text style={[styles.statusPillText, debts.licenciamento.pendente ? styles.pendente : styles.paga]}>
+                    {debts.licenciamento.pendente ? 'Pendente' : 'Em dia'}
                   </Text>
                 </View>
               </View>
@@ -218,6 +221,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.divider,
   },
+  rowNoBorder: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  statusPill: { paddingHorizontal: 11, paddingVertical: 5, borderRadius: 100 },
+  statusPillSuccess: { backgroundColor: colors.successSoftBg },
+  statusPillDanger: { backgroundColor: colors.dangerSoftBg },
+  statusPillText: { fontSize: 11, fontWeight: '700' },
   rowTitle: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
   rowSub: { fontSize: 12, color: colors.textTertiary, marginTop: 2 },
   rowValue: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
@@ -225,6 +233,7 @@ const styles = StyleSheet.create({
   ipvaTotal: { fontSize: 16, fontWeight: 'bold', color: colors.textPrimary, marginBottom: 8 },
   paga: { color: colors.success },
   pendente: { color: colors.danger },
+  neutra: { color: colors.textSecondary },
   plateCard: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 18, padding: 24, margin: 20,
     alignItems: 'center', gap: 8,

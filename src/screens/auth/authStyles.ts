@@ -21,7 +21,6 @@ export const styles = StyleSheet.create({
     width: 52, height: 52, borderRadius: 16, backgroundColor: colors.accent,
     alignItems: 'center', justifyContent: 'center', marginBottom: 6,
   },
-  logoBadgeText: { fontSize: 22, fontWeight: '800', color: colors.white },
   title: { fontSize: 21, fontWeight: '700', color: colors.textPrimary },
   subtitle: { fontSize: 13.5, color: colors.textSecondary, textAlign: 'center' },
 
@@ -29,6 +28,7 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
     borderRadius: 20, padding: 22, gap: 16,
   },
+  forgotLinkRow: { alignSelf: 'flex-end' },
 
   footerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   footerText: { fontSize: 13, color: colors.textSecondary },

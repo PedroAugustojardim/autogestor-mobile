@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import api from '../services/api';
-import { Maintenance, Reminder, CreateMaintenanceDTO } from '../types/maintenance';
+import { Maintenance, Reminder, CreateMaintenanceDTO, MaintenancePrediction } from '../types/maintenance';
 
 // Mesmo critério do backend (ReminderController.next: concluido=false,
 // silenciado=false, ORDER BY dataPrevista ASC LIMIT 1) — evita um GET extra
@@ -21,6 +21,7 @@ interface MaintenanceState {
   fetchMaintenances: (vehicleId: number) => Promise<void>;
   createMaintenance: (vehicleId: number, dto: CreateMaintenanceDTO) => Promise<Maintenance>;
   deleteMaintenance: (vehicleId: number, id: number) => Promise<void>;
+  predictNextDate: (vehicleId: number, tipo: string, data: string, km?: number) => Promise<MaintenancePrediction | null>;
 
   fetchReminders: (vehicleId: number) => Promise<void>;
   fetchNextReminder: (vehicleId: number) => Promise<void>;
@@ -85,6 +86,21 @@ export const useMaintenanceStore = create<MaintenanceState>((set, get) => ({
     // do lembrete vinculado, então o resultado real só vem do servidor) — sem
     // motivo pra serializar.
     await Promise.all([get().fetchReminders(vehicleId), get().fetchNextReminder(vehicleId)]);
+  },
+
+  // Sugestão automática de data pro lembrete — não mexe no estado global (isLoading/
+  // error) nem quebra o fluxo se falhar, já que o campo continua editável manualmente
+  // de qualquer forma (mesmo espírito de fetchNextReminder).
+  predictNextDate: async (vehicleId, tipo, data, km) => {
+    try {
+      const { data: prediction } = await api.get<MaintenancePrediction | null>(
+        `/vehicles/${vehicleId}/maintenance/predict`,
+        { params: { tipo, data, km } },
+      );
+      return prediction;
+    } catch {
+      return null;
+    }
   },
 
   fetchReminders: async (vehicleId) => {

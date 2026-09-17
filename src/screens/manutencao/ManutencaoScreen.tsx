@@ -9,12 +9,12 @@ import Feather from 'react-native-vector-icons/Feather';
 import { useMaintenanceStore } from '../../store/maintenanceStore';
 import { useVehicleStore } from '../../store/vehicleStore';
 import { Maintenance, Reminder } from '../../types/maintenance';
-import { HomeStackParamList } from '../../types/navigation';
-import { daysBetween, formatDateBR as formatDate } from '../../utils/date';
+import { ManutencaoStackParamList } from '../../types/navigation';
+import { daysBetween, elapsedFraction, formatDateBR as formatDate } from '../../utils/date';
 import { formatCurrencyBRL } from '../../utils/currency';
 import { colors } from '../../theme/colors';
 
-type Nav = NativeStackNavigationProp<HomeStackParamList>;
+type Nav = NativeStackNavigationProp<ManutencaoStackParamList>;
 
 function reminderStatus(dataPrevista: string): { tone: 'danger' | 'warning' | 'success'; label: string } {
   const diff = daysBetween(dataPrevista);
@@ -167,8 +167,7 @@ export function ManutencaoScreen() {
     );
   }
 
-  const vehicleLine = [activeVehicle.marca, activeVehicle.modelo].filter(Boolean).join(' ')
-    + (activeVehicle.placa ? ` · ${activeVehicle.placa}` : '');
+  const proximo = proximos[0] ?? null;
 
   return (
     <ScrollView
@@ -176,33 +175,46 @@ export function ManutencaoScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
     >
       <View style={styles.header}>
-        <View style={styles.headerTopRow}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={8}>
-            <Feather name="chevron-left" size={18} color={colors.textSecondary} />
-            <Text style={styles.backText}>Voltar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.addBtn}
-            onPress={() => navigation.navigate('NewMaintenance', { vehicleId: activeVehicle.id })}
-          >
-            <Feather name="plus" size={14} color={colors.white} />
-            <Text style={styles.addBtnText}>Nova</Text>
-          </TouchableOpacity>
-        </View>
         <Text style={styles.title}>Manutenção</Text>
-        {vehicleLine ? <Text style={styles.vehicleLine}>{vehicleLine}</Text> : null}
+        <TouchableOpacity
+          style={styles.addBtn}
+          onPress={() => navigation.navigate('NewMaintenance', { vehicleId: activeVehicle.id })}
+        >
+          <Feather name="plus" size={19} color={colors.white} />
+        </TouchableOpacity>
       </View>
 
       {isLoading && <ActivityIndicator color={colors.accent} style={{ marginTop: 20 }} />}
 
+      {proximo && (
+        <View style={styles.heroCard}>
+          <View style={styles.heroTopRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.heroEyebrow}>PRÓXIMA MANUTENÇÃO</Text>
+              <Text style={styles.heroTitle}>{proximo.tipo}</Text>
+            </View>
+            <View style={styles.heroIconWrap}>
+              <Feather name="tool" size={20} color={colors.white} />
+            </View>
+          </View>
+          <View style={styles.heroProgressTrack}>
+            <View style={[styles.heroProgressFill, { width: `${Math.round(elapsedFraction(proximo.createdAt, proximo.dataPrevista) * 100)}%` }]} />
+          </View>
+          <Text style={styles.heroCaption}>{reminderStatus(proximo.dataPrevista).label}</Text>
+        </View>
+      )}
+
       <View style={styles.timeline}>
         {proximos.length > 0 ? (
-          proximos.map((r, i) => (
-            <ReminderRow
-              key={r.id} item={r} isFirst={i === 0} isLast={false}
-              onSilence={handleSilence} onComplete={handleComplete}
-            />
-          ))
+          <>
+            <Text style={styles.timelineLabel}>Próximos lembretes</Text>
+            {proximos.map((r, i) => (
+              <ReminderRow
+                key={r.id} item={r} isFirst={i === 0} isLast={false}
+                onSilence={handleSilence} onComplete={handleComplete}
+              />
+            ))}
+          </>
         ) : (
           <View style={styles.emptyNotice}>
             <Text style={styles.emptyNoticeText}>
@@ -218,13 +230,16 @@ export function ManutencaoScreen() {
         </View>
 
         {historico.length > 0 ? (
-          historico.map((m, i) => (
-            <MaintenanceRow key={m.id} item={m} isFirst={i === 0} isLast={i === historico.length - 1} onDelete={confirmDelete} />
-          ))
+          <>
+            <Text style={styles.timelineLabel}>Histórico</Text>
+            {historico.map((m, i) => (
+              <MaintenanceRow key={m.id} item={m} isFirst={i === 0} isLast={i === historico.length - 1} onDelete={confirmDelete} />
+            ))}
+          </>
         ) : (
           <View style={styles.emptyNotice}>
             <Text style={styles.emptyNoticeText}>
-              Nenhuma manutenção registrada ainda. Toque em "+ Nova" pra começar o histórico deste veículo.
+              Nenhuma manutenção registrada ainda. Toque em "+" pra começar o histórico deste veículo.
             </Text>
           </View>
         )}
@@ -240,19 +255,33 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg, padding: 32 },
   emptySubtitle: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
 
-  header: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 18 },
-  headerTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  backText: { color: colors.textSecondary, fontSize: 14 },
-  title: { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginTop: 14 },
-  vehicleLine: { fontSize: 13, color: colors.textSecondary, marginTop: 3 },
-  addBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 14,
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingTop: 24, paddingBottom: 18,
   },
-  addBtnText: { color: colors.white, fontSize: 13, fontWeight: '700' },
+  title: { fontSize: 22, fontWeight: '700', color: colors.textPrimary },
+  addBtn: {
+    width: 42, height: 42, borderRadius: 14, backgroundColor: colors.accent,
+    alignItems: 'center', justifyContent: 'center',
+  },
+
+  heroCard: {
+    marginHorizontal: 20, marginBottom: 22, borderRadius: 22, padding: 22,
+    backgroundColor: colors.accent, gap: 14,
+  },
+  heroTopRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  heroEyebrow: { fontSize: 11, letterSpacing: 1.2, color: 'rgba(255,255,255,0.75)', fontWeight: '700' },
+  heroTitle: { fontSize: 19, fontWeight: '700', color: colors.white, marginTop: 4 },
+  heroIconWrap: {
+    width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  heroProgressTrack: { width: '100%', height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' },
+  heroProgressFill: { height: '100%', backgroundColor: colors.white, borderRadius: 3 },
+  heroCaption: { fontSize: 12.5, color: 'rgba(255,255,255,0.85)' },
 
   timeline: { paddingHorizontal: 20, paddingTop: 6 },
+  timelineLabel: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 14, marginLeft: 36 },
 
   timelineRow: { flexDirection: 'row' },
   spineCol: { width: 26, alignItems: 'center' },

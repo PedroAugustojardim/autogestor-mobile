@@ -16,15 +16,16 @@ const ICONS: Record<string, React.ComponentProps<typeof Feather>['name']> = {
 };
 
 function NotificationCard({ item, onPress }: { item: Notification; onPress: () => void }) {
+  const unread = !item.lida;
   return (
-    <TouchableOpacity style={[styles.card, !item.lida && styles.cardUnread]} onPress={onPress}>
-      {!item.lida && <View style={styles.dot} />}
-      <View style={styles.cardIconWrap}>
-        <Feather name={ICONS[item.tipo] ?? 'bell'} size={17} color={colors.textMuted} />
+    <TouchableOpacity style={[styles.card, unread && styles.cardUnread]} onPress={onPress}>
+      {unread && <View style={styles.dot} />}
+      <View style={[styles.cardIconWrap, unread && styles.cardIconWrapUnread]}>
+        <Feather name={ICONS[item.tipo] ?? 'bell'} size={17} color={unread ? colors.accent : colors.textMuted} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={styles.cardTitulo}>{item.titulo}</Text>
-        <Text style={styles.cardMensagem}>{item.mensagem}</Text>
+        <Text style={[styles.cardTitulo, !unread && styles.cardTituloRead]}>{item.titulo}</Text>
+        <Text style={[styles.cardMensagem, unread && styles.cardMensagemUnread]}>{item.mensagem}</Text>
         <Text style={styles.cardData}>{formatDateTime(item.createdAt)}</Text>
       </View>
     </TouchableOpacity>
@@ -91,16 +92,22 @@ const styles = StyleSheet.create({
   headerPad: { paddingHorizontal: 20, paddingTop: 24 },
   card: {
     position: 'relative', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
-    borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+    borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'flex-start', gap: 12,
   },
   cardUnread: { borderColor: colors.accent },
   dot: {
-    position: 'absolute', top: 14, right: 14,
+    position: 'absolute', top: 14, left: 6,
     width: 7, height: 7, borderRadius: 4, backgroundColor: colors.accent,
   },
-  cardIconWrap: { width: 36, height: 36, borderRadius: 11, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
+  cardIconWrap: {
+    width: 38, height: 38, borderRadius: 12, backgroundColor: colors.surfaceAlt,
+    alignItems: 'center', justifyContent: 'center', marginLeft: 8,
+  },
+  cardIconWrapUnread: { backgroundColor: colors.accentSoftBg },
   cardTitulo: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  cardTituloRead: { color: colors.textMuted, fontWeight: '600' },
   cardMensagem: { fontSize: 12.5, color: colors.textSecondary, marginTop: 2, lineHeight: 18 },
+  cardMensagemUnread: { color: colors.textMuted },
   cardData: { fontSize: 11, color: colors.textTertiary, marginTop: 6 },
   empty: { alignItems: 'center', marginTop: 64, gap: 12 },
   emptyText: { color: colors.textTertiary, fontSize: 14 },

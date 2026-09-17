@@ -4,12 +4,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Feather from 'react-native-vector-icons/Feather';
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { VehicleRegisterScreen } from '../screens/vehicle/VehicleRegisterScreen';
-import { ManutencaoScreen } from '../screens/manutencao/ManutencaoScreen';
-import { NewMaintenanceScreen } from '../screens/manutencao/NewMaintenanceScreen';
 import { NotificacoesScreen } from '../screens/notificacoes/NotificacoesScreen';
 import { ConsultasScreen } from '../screens/consultas/ConsultasScreen';
-import { GastosNavigator } from './GastosNavigator';
 import { RelatoriosScreen } from '../screens/relatorios/RelatoriosScreen';
+import { GastosNavigator } from './GastosNavigator';
+import { ManutencaoNavigator } from './ManutencaoNavigator';
 import { PerfilNavigator } from './PerfilNavigator';
 import { AppTabParamList, HomeStackParamList } from '../types/navigation';
 import { colors } from '../theme/colors';
@@ -20,10 +19,9 @@ function HomeStackNavigator() {
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
       <HomeStack.Screen name="VehicleRegister" component={VehicleRegisterScreen} options={{ presentation: 'modal' }} />
-      <HomeStack.Screen name="Manutencao" component={ManutencaoScreen} />
-      <HomeStack.Screen name="NewMaintenance" component={NewMaintenanceScreen} options={{ presentation: 'modal' }} />
       <HomeStack.Screen name="Notificacoes" component={NotificacoesScreen} />
       <HomeStack.Screen name="Consultas" component={ConsultasScreen} />
+      <HomeStack.Screen name="Relatorios" component={RelatoriosScreen} />
     </HomeStack.Navigator>
   );
 }
@@ -56,14 +54,14 @@ export function TabNavigator() {
       <Tab.Screen
         name="Gastos"
         component={GastosNavigator}
-        options={{ tabBarIcon: ({ color, size }) => <Feather name="credit-card" size={size} color={color} /> }}
+        options={{ tabBarIcon: ({ color, size }) => <Feather name="file" size={size} color={color} /> }}
       />
       <Tab.Screen
-        name="Relatorios"
-        component={RelatoriosScreen}
+        name="Manutencao"
+        component={ManutencaoNavigator}
         options={{
-          tabBarLabel: 'Relatórios',
-          tabBarIcon: ({ color, size }) => <Feather name="bar-chart-2" size={size} color={color} />,
+          tabBarLabel: 'Manutenção',
+          tabBarIcon: ({ color, size }) => <Feather name="tool" size={size} color={color} />,
         }}
       />
       <Tab.Screen

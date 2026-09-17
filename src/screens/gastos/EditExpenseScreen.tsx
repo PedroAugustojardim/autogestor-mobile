@@ -78,11 +78,20 @@ export function EditExpenseScreen() {
 
         <View style={styles.form}>
           <FormField label="Valor (R$)" required keyboardType="decimal-pad" value={valor} onChangeText={setValor} />
-          <FormField label="Data" required placeholder="AAAA-MM-DD" value={data} onChangeText={setData} />
-          <FormField label="KM atual" optional placeholder="Ex: 52000" keyboardType="number-pad" value={km} onChangeText={setKm} />
-          <FormField label="Observação" optional multiline style={{ height: 80 }} textAlignVertical="top" value={descricao} onChangeText={setDescricao} />
+          <View style={styles.row}>
+            <View style={{ flex: 1 }}>
+              <FormField label="Data" required placeholder="AAAA-MM-DD" value={data} onChangeText={setData} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <FormField label="KM atual" placeholder="Ex: 52000" keyboardType="number-pad" value={km} onChangeText={setKm} />
+            </View>
+          </View>
+          <FormField label="Observação" multiline style={{ height: 80 }} textAlignVertical="top" value={descricao} onChangeText={setDescricao} />
 
           <PrimaryButton label="Salvar alterações" onPress={handleSave} loading={loading} />
+        </View>
+
+        <View style={styles.deleteRow}>
           <PrimaryButton label="Excluir este gasto" variant="danger" icon="trash-2" onPress={handleDelete} />
         </View>
       </ScrollView>
@@ -100,4 +109,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 19, fontWeight: '700', color: colors.textPrimary },
   subtitle: { fontSize: 12.5, color: colors.textSecondary },
   form: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 16, gap: 12 },
+  row: { flexDirection: 'row', gap: 10 },
+  deleteRow: { alignItems: 'center', marginTop: 20 },
 });

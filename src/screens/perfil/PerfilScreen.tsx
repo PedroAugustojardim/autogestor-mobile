@@ -7,18 +7,30 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Feather from 'react-native-vector-icons/Feather';
 import { useAuthStore } from '../../store/authStore';
+import { useVehicleStore } from '../../store/vehicleStore';
 import { PerfilStackParamList } from '../../types/navigation';
+import { VEHICLE_LABELS } from '../../types/vehicle';
 import api from '../../services/api';
 import { colors } from '../../theme/colors';
 
 type Nav = NativeStackNavigationProp<PerfilStackParamList>;
 type FeatherName = React.ComponentProps<typeof Feather>['name'];
 
-const PLAN_LABELS: Record<string, { label: string; cor: string; desc: string }> = {
-  gratuito:       { label: 'Gratuito',       cor: colors.textTertiary, desc: '1 veículo · Gastos básicos · Relatórios 6 meses' },
-  premium_mensal: { label: 'Premium Mensal', cor: colors.accent,       desc: 'Veículos ilimitados · Todos os relatórios · Suporte prioritário' },
-  premium_anual:  { label: 'Premium Anual',  cor: colors.success,      desc: 'Veículos ilimitados · Todos os relatórios · 2 meses grátis' },
+const PLAN_LABELS: Record<string, { label: string; cor: string; bg: string; desc: string }> = {
+  gratuito:       { label: 'Gratuito',       cor: colors.textTertiary, bg: colors.surfaceAlt,   desc: '1 veículo · Gastos básicos · Relatórios 6 meses' },
+  premium_mensal: { label: 'Premium Mensal', cor: colors.accent,       bg: colors.accentSoftBg,  desc: 'Veículos ilimitados · Todos os relatórios · Suporte prioritário' },
+  premium_anual:  { label: 'Premium Anual',  cor: colors.success,      bg: colors.successSoftBg, desc: 'Veículos ilimitados · Todos os relatórios · 2 meses grátis' },
 };
+
+// Iniciais pro avatar — primeiro + último nome, igual ao "PJ" de "Pedro Jardim".
+function getInitials(name?: string): string {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  const first = parts[0].charAt(0);
+  const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : '';
+  return (first + last).toUpperCase();
+}
 
 function Row({
   icon, label, value, onPress, danger = false,
@@ -40,6 +52,7 @@ function Row({
 export function PerfilScreen() {
   const navigation = useNavigation<Nav>();
   const { user, logout } = useAuthStore();
+  const { activeVehicle } = useVehicleStore();
 
   const plano = user?.plano ?? 'gratuito';
   const planInfo = PLAN_LABELS[plano];
@@ -78,20 +91,35 @@ export function PerfilScreen() {
       {/* Avatar e nome */}
       <View style={styles.header}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {user?.name?.charAt(0).toUpperCase() ?? '?'}
-          </Text>
+          <Text style={styles.avatarText}>{getInitials(user?.name)}</Text>
         </View>
         <Text style={styles.userName}>{user?.name}</Text>
         <Text style={styles.userEmail}>{user?.email}</Text>
 
         {/* Badge do plano */}
-        <View style={[styles.planBadge, { borderColor: planInfo.cor }]}>
+        <View style={[styles.planBadge, { backgroundColor: planInfo.bg }]}>
           <Text style={[styles.planBadgeText, { color: planInfo.cor }]}>
             {planInfo.label}
           </Text>
         </View>
       </View>
+
+      {/* Veículo ativo */}
+      {activeVehicle && (
+        <View style={styles.vehicleCard}>
+          <View style={styles.vehicleIconWrap}>
+            <Feather name="briefcase" size={19} color={colors.textMuted} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.vehicleName}>
+              {activeVehicle.apelido || `${activeVehicle.marca} ${activeVehicle.modelo}`}
+            </Text>
+            <Text style={styles.vehicleSub} numberOfLines={1}>
+              {activeVehicle.placa ? `Placa ${activeVehicle.placa}` : VEHICLE_LABELS[activeVehicle.tipo]}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Seção: Conta */}
       <Text style={styles.section}>Conta</Text>
@@ -164,8 +192,19 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 32, fontWeight: '700', color: colors.white },
   userName: { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
   userEmail: { fontSize: 13.5, color: colors.textSecondary, marginBottom: 14 },
-  planBadge: { borderWidth: 1.5, borderRadius: 100, paddingHorizontal: 14, paddingVertical: 5, backgroundColor: colors.surface },
+  planBadge: { borderRadius: 100, paddingHorizontal: 14, paddingVertical: 6 },
   planBadgeText: { fontSize: 12.5, fontWeight: '700' },
+  vehicleCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+    borderRadius: 18, marginHorizontal: 16, marginBottom: 8, padding: 16,
+  },
+  vehicleIconWrap: {
+    width: 46, height: 46, borderRadius: 14, backgroundColor: colors.surfaceAlt,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  vehicleName: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  vehicleSub: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
   section: { fontSize: 11.5, fontWeight: '700', color: colors.textTertiary, marginTop: 24, marginBottom: 8, marginHorizontal: 16, textTransform: 'uppercase', letterSpacing: 0.8 },
   card: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 16, marginHorizontal: 16, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, gap: 12 },

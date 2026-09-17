@@ -16,10 +16,14 @@ export type AuthStackParamList = {
 export type HomeStackParamList = {
   HomeMain: undefined;
   VehicleRegister: undefined;
-  Manutencao: undefined;
-  NewMaintenance: { vehicleId: number };
   Notificacoes: undefined;
   Consultas: undefined;
+  Relatorios: undefined;
+};
+
+export type ManutencaoStackParamList = {
+  ManutencaoMain: undefined;
+  NewMaintenance: { vehicleId: number };
 };
 
 export type GastosStackParamList = {
@@ -38,6 +42,6 @@ export type PerfilStackParamList = {
 export type AppTabParamList = {
   Home: undefined;
   Gastos: undefined;
-  Relatorios: undefined;
+  Manutencao: undefined;
   Perfil: undefined;
 };

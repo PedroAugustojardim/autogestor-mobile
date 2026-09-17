@@ -3,15 +3,19 @@ import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { colors } from '../theme/colors';
 
 export function SelectableChip({
-  label, selected, onPress,
+  label, selected, onPress, selectedColor,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
+  selectedColor?: string;
 }) {
   return (
     <TouchableOpacity
-      style={[styles.chip, selected && styles.chipSelected]}
+      style={[
+        styles.chip,
+        selected && [styles.chipSelected, { backgroundColor: selectedColor ?? colors.accent, borderColor: selectedColor ?? colors.accent }],
+      ]}
       onPress={onPress}
     >
       <Text style={[styles.text, selected && styles.textSelected]}>{label}</Text>
