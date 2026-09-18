@@ -41,11 +41,9 @@ interface AuthState {
   restoreSession: () => Promise<boolean>;
 }
 
-// TEMP DEV BYPASS — exploração de UI sem backend local, ver conversa com Claude Code.
-// Reverter com `git checkout -- src/store/authStore.ts` antes de commitar qualquer coisa.
 export const useAuthStore = create<AuthState>((set, get) => ({
-  user: { id: 1, name: 'Pedro Jardim', email: 'pedro@example.com', plano: 'gratuito', notificationsEnabled: true },
-  isAuthenticated: true,
+  user: null,
+  isAuthenticated: false,
   isLoading: false,
 
   login: async (email, password) => {
@@ -81,8 +79,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   restoreSession: async () => {
-    return true; // TEMP DEV BYPASS — ver nota acima
-    // eslint-disable-next-line no-unreachable
     let token: string | null;
     try {
       token = await getAccessToken();
