@@ -14,6 +14,7 @@ import { FormField } from '../../components/FormField';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { colors } from '../../theme/colors';
 import { styles } from './authStyles';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 const schema = z.object({
   token: z.string().trim().min(1, 'Cole o código recebido por email'),
@@ -46,7 +47,7 @@ export function ResetPasswordScreen({ navigation }: Props) {
         { text: 'OK', onPress: () => navigation.navigate('Login') },
       ]);
     } catch (err: any) {
-      const msg = err?.response?.data?.error || 'Código inválido ou expirado. Peça um novo email.';
+      const msg = getApiErrorMessage(err, 'Código inválido ou expirado. Peça um novo email.');
       Alert.alert('Erro', msg);
     } finally {
       setLoading(false);

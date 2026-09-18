@@ -14,6 +14,7 @@ import { FormField } from '../../components/FormField';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { SelectableChip } from '../../components/SelectableChip';
 import { colors } from '../../theme/colors';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 type RouteProps = RouteProp<ManutencaoStackParamList, 'NewMaintenance'>;
 
@@ -76,7 +77,7 @@ export function NewMaintenanceScreen() {
       });
       navigation.goBack();
     } catch (err: any) {
-      Alert.alert('Erro', err?.response?.data?.error ?? 'Erro ao registrar manutenção');
+      Alert.alert('Erro', getApiErrorMessage(err, 'Erro ao registrar manutenção'));
     }
   };
 

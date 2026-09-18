@@ -36,7 +36,10 @@ interface AuthState {
   isLoading: boolean;
 
   login: (email: string, password: string) => Promise<void>;
+  // Não abre sessão: o cadastro só vira login depois de verifyEmail (código enviado por email).
   register: (name: string, email: string, password: string, inviteCode: string) => Promise<void>;
+  verifyEmail: (email: string, code: string) => Promise<void>;
+  resendVerification: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   restoreSession: () => Promise<boolean>;
 }
@@ -60,12 +63,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   register: async (name, email, password, inviteCode) => {
     set({ isLoading: true });
     try {
-      const { data } = await api.post('/auth/register', { name, email, password, inviteCode });
+      // 201 sem tokens ({ verificationRequired: true }) — a sessão só nasce em verifyEmail.
+      await api.post('/auth/register', { name, email, password, inviteCode });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  verifyEmail: async (email, code) => {
+    set({ isLoading: true });
+    try {
+      const { data } = await api.post('/auth/verify-email', { email, code });
       await setTokens(data.accessToken, data.refreshToken);
       set({ user: data.user, isAuthenticated: true });
     } finally {
       set({ isLoading: false });
     }
+  },
+
+  resendVerification: async (email) => {
+    await api.post('/auth/resend-verification', { email });
   },
 
   logout: async () => {

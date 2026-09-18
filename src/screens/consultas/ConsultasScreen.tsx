@@ -12,6 +12,7 @@ import { BackHeader } from '../../components/BackHeader';
 import { FormField } from '../../components/FormField';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { colors } from '../../theme/colors';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 function PlateForm({ vehicleId, onLinked }: { vehicleId: number; onLinked: () => void }) {
   const { linkPlate } = useConsultaStore();
@@ -25,7 +26,7 @@ function PlateForm({ vehicleId, onLinked }: { vehicleId: number; onLinked: () =>
       await linkPlate(vehicleId, placa.trim().toUpperCase(), renavam.trim());
       onLinked();
     } catch (err: any) {
-      Alert.alert('Erro', err?.response?.data?.error ?? 'Não foi possível cadastrar a placa');
+      Alert.alert('Erro', getApiErrorMessage(err, 'Não foi possível cadastrar a placa'));
     } finally {
       setLoading(false);
     }

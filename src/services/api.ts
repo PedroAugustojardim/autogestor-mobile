@@ -82,7 +82,13 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        console.warn('[api] refresh token expirado — sessão encerrada', refreshError);
+        // Só status/mensagem, nunca o objeto do erro: o AxiosError carrega `config.data`
+        // com o corpo da requisição de refresh (o refreshToken em texto claro), e esse
+        // catch também roda em erro de rede — quando o token ainda é válido. console.*
+        // vai pro logcat no Android, inclusive em build release.
+        const detail = (refreshError as { response?: { status?: number }; message?: string })?.response?.status
+          ?? (refreshError as { message?: string })?.message;
+        console.warn('[api] refresh token expirado — sessão encerrada', detail);
         await clearTokens();
         return Promise.reject(refreshError);
       }

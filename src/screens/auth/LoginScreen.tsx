@@ -36,6 +36,11 @@ export function LoginScreen({ navigation }: Props) {
     try {
       await login(data.email, data.password);
     } catch (err: any) {
+      // Conta criada mas ainda sem o email confirmado: leva direto pra tela do código.
+      if (err?.response?.status === 403 && err?.response?.data?.code === 'email_not_verified') {
+        navigation.navigate('VerifyEmail', { email: data.email.trim() });
+        return;
+      }
       const msg = err?.response?.data?.error || 'Erro ao fazer login. Tente novamente.';
       Alert.alert('Erro', msg);
     }

@@ -23,6 +23,9 @@ export const styles = StyleSheet.create({
   },
   title: { fontSize: 21, fontWeight: '700', color: colors.textPrimary },
   subtitle: { fontSize: 13.5, color: colors.textSecondary, textAlign: 'center' },
+  // Email em destaque numa linha própria (tela de confirmação): dentro da frase, um email longo
+  // quebrava no meio do domínio ("...@pentest" / ".local").
+  emailHighlight: { fontSize: 13.5, fontWeight: '600', color: colors.textPrimary, textAlign: 'center' },
 
   form: {
     backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,

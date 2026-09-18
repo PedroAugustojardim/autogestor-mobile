@@ -14,6 +14,7 @@ import { FormField } from '../../components/FormField';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { colors } from '../../theme/colors';
 import { styles } from './authStyles';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 const schema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -61,8 +62,9 @@ export function RegisterScreen({ navigation }: Props) {
   const onSubmit = async (data: FormData) => {
     try {
       await registerUser(data.name, data.email, data.password, data.inviteCode);
+      navigation.navigate('VerifyEmail', { email: data.email.trim(), justSent: true });
     } catch (err: any) {
-      const msg = err?.response?.data?.error || 'Erro ao criar conta. Tente novamente.';
+      const msg = getApiErrorMessage(err, 'Erro ao criar conta. Tente novamente.');
       Alert.alert('Erro', msg);
     }
   };

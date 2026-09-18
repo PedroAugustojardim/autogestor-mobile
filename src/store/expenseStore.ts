@@ -3,6 +3,7 @@ import api from '../services/api';
 import {
   Expense, ExpenseCategory, ExpenseSummary, CreateExpenseDTO,
 } from '../types/expense';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface ExpenseState {
   expenses: Expense[];
@@ -75,7 +76,7 @@ export const useExpenseStore = create<ExpenseState>((set, get) => {
         set((s) => ({ expenses: [data, ...s.expenses] }));
         return data;
       } catch (err: any) {
-        const msg = err?.response?.data?.error ?? 'Erro ao registrar gasto';
+        const msg = getApiErrorMessage(err, 'Erro ao registrar gasto');
         set({ error: msg });
         throw err;
       } finally {

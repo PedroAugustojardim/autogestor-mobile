@@ -10,6 +10,7 @@ import { VehicleType, VEHICLE_LABELS, VEHICLE_ICONS } from '../../types/vehicle'
 import { FormField } from '../../components/FormField';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { colors } from '../../theme/colors';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 const VEHICLE_TYPES: VehicleType[] = ['carro', 'moto', 'caminhao', 'van'];
 
@@ -40,7 +41,7 @@ export function VehicleRegisterScreen() {
       });
       navigation.goBack();
     } catch (err: any) {
-      const msg = err?.response?.data?.error || 'Erro ao cadastrar veículo.';
+      const msg = getApiErrorMessage(err, 'Erro ao cadastrar veículo.');
       Alert.alert('Erro', msg);
     }
   };

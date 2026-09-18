@@ -10,6 +10,7 @@ import api from '../../services/api';
 import { FormField } from '../../components/FormField';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { colors } from '../../theme/colors';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 export function EditarNomeScreen() {
   const navigation = useNavigation();
@@ -28,7 +29,7 @@ export function EditarNomeScreen() {
       await restoreSession();
       navigation.goBack();
     } catch (err: any) {
-      Alert.alert('Erro', err?.response?.data?.error ?? 'Não foi possível atualizar o nome');
+      Alert.alert('Erro', getApiErrorMessage(err, 'Não foi possível atualizar o nome'));
     } finally {
       setLoading(false);
     }

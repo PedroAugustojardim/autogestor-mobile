@@ -13,6 +13,7 @@ import {
 import { FormField } from '../../components/FormField';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { colors } from '../../theme/colors';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 function Requirement({ ok, label }: { ok: boolean; label: string }) {
   return (
@@ -49,7 +50,7 @@ export function AlterarSenhaScreen() {
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (err: any) {
-      Alert.alert('Erro', err?.response?.data?.error ?? 'Não foi possível alterar a senha');
+      Alert.alert('Erro', getApiErrorMessage(err, 'Não foi possível alterar a senha'));
     } finally {
       setLoading(false);
     }

@@ -10,6 +10,7 @@ import { GastosStackParamList } from '../../types/navigation';
 import { FormField } from '../../components/FormField';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { colors } from '../../theme/colors';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 type RouteProps = RouteProp<GastosStackParamList, 'EditExpense'>;
 
@@ -37,8 +38,8 @@ export function EditExpenseScreen() {
       });
       await fetchSummary(vehicleId);
       navigation.goBack();
-    } catch {
-      Alert.alert('Erro', 'Não foi possível atualizar o gasto');
+    } catch (err) {
+      Alert.alert('Erro', getApiErrorMessage(err, 'Não foi possível atualizar o gasto'));
     } finally {
       setLoading(false);
     }

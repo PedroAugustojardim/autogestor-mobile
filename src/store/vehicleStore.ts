@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import api from '../services/api';
 import { Vehicle, CreateVehicleDTO } from '../types/vehicle';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface VehicleState {
   vehicles: Vehicle[];
@@ -41,7 +42,7 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
       set({ vehicles, activeVehicle: data });
       return data;
     } catch (err: any) {
-      const msg = err?.response?.data?.error ?? 'Erro ao cadastrar veículo';
+      const msg = getApiErrorMessage(err, 'Erro ao cadastrar veículo');
       set({ error: msg });
       throw err;
     } finally {

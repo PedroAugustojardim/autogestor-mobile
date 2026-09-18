@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import api from '../services/api';
 import { Maintenance, Reminder, CreateMaintenanceDTO, MaintenancePrediction } from '../types/maintenance';
+import { getApiErrorMessage } from '../utils/apiError';
 
 // Mesmo critério do backend (ReminderController.next: concluido=false,
 // silenciado=false, ORDER BY dataPrevista ASC LIMIT 1) — evita um GET extra
@@ -60,7 +61,7 @@ export const useMaintenanceStore = create<MaintenanceState>((set, get) => ({
       await get().fetchNextReminder(vehicleId);
       return data;
     } catch (err: any) {
-      const msg = err?.response?.data?.error ?? 'Erro ao registrar manutenção';
+      const msg = getApiErrorMessage(err, 'Erro ao registrar manutenção');
       set({ error: msg });
       throw err;
     } finally {

@@ -9,6 +9,8 @@ export type RootStackParamList = {
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
+  // justSent: true logo depois do cadastro (o código acabou de ser enviado → reenvio em cooldown).
+  VerifyEmail: { email: string; justSent?: boolean };
   ForgotPassword: undefined;
   ResetPassword: undefined;
 };
