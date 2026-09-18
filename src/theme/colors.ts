@@ -12,6 +12,9 @@ export const colors = {
   textMuted: '#B7BFD3',
 
   accent: '#3E7BFA',
+  // Cor de link do canvas de design (`a { color: #5B8DEF }` em todos os artboards) — mais clara que o
+  // acento dos botões. Hoje só a tela de confirmação de email usa; as demais ainda usam `accent`.
+  link: '#5B8DEF',
   accentSoftBg: '#1B2C4D',
 
   success: '#34D399',

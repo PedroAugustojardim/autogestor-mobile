@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { TouchableOpacity, View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { colors } from '../theme/colors';
 
@@ -28,20 +28,22 @@ export function PrimaryButton({
     );
   }
 
+  // A opacidade do estado desabilitado/carregando vai numa View interna com
+  // needsOffscreenAlphaCompositing: sem isso o Android aplica os 0.6 em cada camada separada (o texto
+  // fica 60% SOBRE o fundo já esmaecido → mais claro e azulado), enquanto o desenho (CSS) trata o botão
+  // como um grupo (texto branco a 60% sobre o card). O TouchableOpacity não repassa essa propriedade.
   return (
-    <TouchableOpacity
-      style={[styles.button, isDisabled && styles.disabledOpacity]}
-      onPress={onPress}
-      disabled={isDisabled}
-    >
-      {loading ? (
-        <ActivityIndicator color={colors.white} />
-      ) : (
-        <>
-          {icon && <Feather name={icon} size={16} color={colors.white} />}
-          <Text style={styles.buttonText}>{label}</Text>
-        </>
-      )}
+    <TouchableOpacity onPress={onPress} disabled={isDisabled}>
+      <View needsOffscreenAlphaCompositing style={[styles.button, isDisabled && styles.disabledOpacity]}>
+        {loading ? (
+          <ActivityIndicator color={colors.white} />
+        ) : (
+          <>
+            {icon && <Feather name={icon} size={16} color={colors.white} />}
+            <Text style={styles.buttonText}>{label}</Text>
+          </>
+        )}
+      </View>
     </TouchableOpacity>
   );
 }
