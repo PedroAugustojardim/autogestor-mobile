@@ -5,13 +5,13 @@ const PROD_URL = 'https://autogestor-api-production.up.railway.app/api/v1';
 const DEV_URL = 'http://10.0.2.2:3000/api/v1';
 // Única fonte pra escolha de ambiente — performRefresh() faz uma chamada crua
 // (fora da instância `api`) e precisa da mesma URL, sem reescrever o ternário.
-const BASE_URL = __DEV__ ? DEV_URL : PROD_URL;
+export const BASE_URL = __DEV__ ? DEV_URL : PROD_URL;
 
 // User-Agent próprio: é assim que o backend decide se este cliente pode receber o
 // refresh token no corpo da resposta (ver isTrustedMobileClient em
 // autogestor-api/src/utils/clientDetection.ts) em vez de só no cookie httpOnly —
 // nunca remover ou o refresh do mobile para de devolver o token no body.
-const MOBILE_USER_AGENT = 'AutoGestorMobile/1.0';
+export const MOBILE_USER_AGENT = 'AutoGestorMobile/1.0';
 
 const api = axios.create({
   baseURL: BASE_URL,
